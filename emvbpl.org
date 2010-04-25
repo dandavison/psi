@@ -1,0 +1,54 @@
+#+title:Inference of population structure from large genotype data sets
+#+author:Dan Davison
+#+date:\today
+
+* Introduction
+Inference of population structure is often the motivation for creating
+data sets of genetic variation at the level of species and
+populations. In addition, information about population structure is
+often required in other inference problems. A notable example is
+genome-wide association study of common diseases in humans. These
+studies seek to identify genomic regions within which genetic
+variation is associated with the phenotype of interest. Penetrance /
+effect sizes are typically very small for the phenotypes of interest,
+with the result that well-powered studies require large sample
+sizes. In this situation, subtle correlations between genome-wide
+ancestry and phenotype result in spurious association signals in a
+naive analysis. This problem can be avoided to a large degree if
+information about ancestry (i.e. population structure) is available.
+
+Starting with the work of Pritchard et al. (2000), several studies
+have proposed Bayesian mixture models for multilocus genotype data
+with the objective of characterising population structure
+\ref{Pritchard et al., BAPS, geneland, structurama, Leslie?}, with the
+software of PSD remaining very widely-used. However, in the last five
+years those analysing large SNP data sets (10^5-10^6 loci, 10^3-10^4
+individuals) have largely abandoned these methods due to the long
+computing times required by the available implementations, turning
+instead to Principal Components Analysis (PCA).
+
+Many details of the models and how they are fitted vary across these
+studies, but one notable early contribution in this literature is the
+``Admixture Model'' introduced by Pritchard et al. (2000).
+
+* Basic mixture model
+
+In the basic mixture modelling problem, $n$ items ${X_i,\ldots,X_n}$
+have been observed and each is assumed to belong to one of $K$
+groups. The unknown group membership of item $i$ is $Z_i \in
+{1,\ldots,K}$. Group $k$ is characterised by a probability
+distribution $f_{\phi_k}(x)$. The objective is inference for the
+collection of labels $Z$, which typically also requires inference for
+the parameters $\phi_k$. The ``No-Admixture Model'' of Pritchard et
+al. (2000) is an example of this class of models: $X_i$ is a data set
+of multilocus genotyoes for individual $i$, and $\phi_k$ are the
+allele frequencies at each locus in group $k$.
+
+* Admixture model
+
+In contrast to the ``hard membership'' of the NAM, in the ``Admixture
+Model'' (AM) of PSD, within a single individual, alleles at different
+loci or on different chromosomes may have been inherited from
+different groups.
+
+
