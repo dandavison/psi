@@ -25,30 +25,41 @@ software of PSD remaining very widely-used. However, in the last five
 years those analysing large SNP data sets (10^5-10^6 loci, 10^3-10^4
 individuals) have largely abandoned these methods due to the long
 computing times required by the available implementations, turning
-instead to Principal Components Analysis (PCA).
+instead to Principal Components Analysis (PCA). Here we describe some
+new algorithms for fitting mixture models to genotype data, some of
+which result in practical computing times when analysing such large
+data sets.
 
+*** Admixture model
 Many details of the models and how they are fitted vary across these
 studies, but one notable early contribution in this literature is the
 ``Admixture Model'' introduced by Pritchard et al. (2000).
 
-* Basic mixture model
+In the basic mixture modelling problem, n items {X_i,\ldots,X_n}
+have been observed and each is assumed to belong to one of K
+groups. Each item X_i has an unknown label Z_i \in {1,\ldots,K}
+indicating the group to which it belongs. Group k is characterised
+by a probability distribution f_{\phi_k}(x). The objective is
+inference for the collection of labels Z, which typically also
+requires inference for the parameters \phi_k. The ``No-Admixture
+Model'' of Pritchard et al. (2000) is an example of this class of
+models: X_i is a data set of multilocus genotypes for individual
+i, and \phi_k are the allele frequencies at each locus in group
+k.
 
-In the basic mixture modelling problem, $n$ items ${X_i,\ldots,X_n}$
-have been observed and each is assumed to belong to one of $K$
-groups. The unknown group membership of item $i$ is $Z_i \in
-{1,\ldots,K}$. Group $k$ is characterised by a probability
-distribution $f_{\phi_k}(x)$. The objective is inference for the
-collection of labels $Z$, which typically also requires inference for
-the parameters $\phi_k$. The ``No-Admixture Model'' of Pritchard et
-al. (2000) is an example of this class of models: $X_i$ is a data set
-of multilocus genotyoes for individual $i$, and $\phi_k$ are the
-allele frequencies at each locus in group $k$.
+In contrast, in the ``Admixture Model'' of PSD, alleles at different
+loci or on different chromosomes within a single individual may have
+been inherited from different groups. Thus Z_i is replaced by a matrix
+in which Z_ila is the label of the group from which the allele on
+chromosome a at locus l in individual i was inherited. In general it
+is not possible to infer the values of the Z_ila; instead we are
+interested in the genome-wide proportion Q_ik of ancestry for
+individual i in group k.
 
-* Admixture model
-
-In contrast to the ``hard membership'' of the NAM, in the ``Admixture
-Model'' (AM) of PSD, within a single individual, alleles at different
-loci or on different chromosomes may have been inherited from
-different groups.
-
-
+Pritchard et al. (2003) introduced an AM for loosely linked markers in
+which the ancestry labels Z_i.a are autocorrelated along a chromosome
+due to linkage. In this situation it can be possible to estimate
+Z_ila at each locus. A disadvantage of methods based on PCA is that
+they are not easily extended in this manner: the principal components
+are eigenvectors of a covariance matrix which is estimated by
+averaging across all loci.
