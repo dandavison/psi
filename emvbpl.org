@@ -37,7 +37,28 @@ EM-like hill-climbing algorithm. The second approach is parallel
 computing. This offers the possibility of reducing computation time in
 linear proportion to the number of processors available. I describe
 and implement parallel algorithms for EM, VB and MCMC.
+* Overview of Paper
+  :PROPERTIES:
+  :ID:       36c71055-e7db-4325-8c63-ea62130b873e
+  :END:
+In section [[id:66e1ee52-b46d-4ce8-90bb-dd7e7b855d5a][Models]] I describe the models and introduce notation. The
+models studies are the "No Admixture Model" and the "Admixture Model"
+of \ref{Pritchard_et_al_2000}, and the "F Model" of
+\ref{Falush_et_al_2003}. In section [[id:5e73e48a-3c1d-401a-85d4-af55e59c8dde][Fitting the models]] I describe new
+algorithms for fitting the three models. In each case I start with the
+EM algorithm which, although familiar, provides a helpful basis for
+describing the corresponding VB algorithm. Finally I describe parallel
+versions of the same algorithms. Additional derivation of the updates
+used are provided in the [[id:5b050c13-e5a3-4561-8623-54af42c27253][Appendix]]. Section [[id:6d8cbdfb-0be1-474d-8a5f-74dcecb78916][Results]] presents results of
+using the different methods to fit the models to simulated and real
+data. Finally in section [[id:280c42eb-52a3-46ff-9812-61a38e0b82ae][Discussion]] I discuss potential applications
+of these methods. The algorithms are implemented in the software
+package =psi= available at [psi URL].
 * Models
+  :PROPERTIES:
+  :ID:       66e1ee52-b46d-4ce8-90bb-dd7e7b855d5a
+  :END:
+
 *** Basic mixture model
 In the basic mixture modelling problem, n items {X_i,\ldots,X_n} have
 been observed and each is assumed to belong to one of K groups. Each
@@ -125,6 +146,9 @@ point estimates of model parameters:
   \end{itemize}
 #+end_src
 * Fitting the models
+  :PROPERTIES:
+  :ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
+  :END:
 *** Variational Bayes overview
 #+begin_src latex
   \begin{equation*}
@@ -460,7 +484,26 @@ $q(\mu)$ in the correlated frequencies model differs only in that the
 'prior counts' of the number of copies of allele $j$ observed in
 population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
 
-*** Appendix
+* Results
+  :PROPERTIES:
+  :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
+  :END:
+[[file:images/vbnam-simulation-results-n80-L1000-F.6-10runs.png]]
+* Discussion
+  :PROPERTIES:
+  :ID:       280c42eb-52a3-46ff-9812-61a38e0b82ae
+  :END:
+Pritchard et al. (2003) introduced an AM for loosely linked markers in
+which the ancestry labels Z_{i.a} are autocorrelated along a chromosome
+due to linkage. In this situation it can be possible to estimate
+Z_ila at each locus. A disadvantage of methods based on PCA is that
+they are not easily extended in this manner: the principal components
+are eigenvectors of a covariance matrix which is estimated by
+averaging across all loci.
+* Appendix
+  :PROPERTIES:
+  :ID:       5b050c13-e5a3-4561-8623-54af42c27253
+  :END:
 
 #+begin_src latex
   \appendix{}
@@ -644,16 +687,7 @@ population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
   \mu = \frac{\sum_i x_i p_i(k) + \alpha F' -1}{\sum_i p_i(k) + F' - 2}
   \]
 #+end_src
-* Results
-[[file:images/vbnam-simulation-results-n80-L1000-F.6-10runs.png]]
-* Discussion
-Pritchard et al. (2003) introduced an AM for loosely linked markers in
-which the ancestry labels Z_{i.a} are autocorrelated along a chromosome
-due to linkage. In this situation it can be possible to estimate
-Z_ila at each locus. A disadvantage of methods based on PCA is that
-they are not easily extended in this manner: the principal components
-are eigenvectors of a covariance matrix which is estimated by
-averaging across all loci.
+
 * 							   :noexport:
 #+latex_header: \usepackage{amsmath}
 #+latex_header: \usepackage{mathrsfs}
