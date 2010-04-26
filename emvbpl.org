@@ -29,45 +29,55 @@ years those analysing large SNP data sets (10^5-10^6 loci, 10^3-10^4
 individuals) have largely abandoned these methods due to the long
 computing times required by the available implementations, turning
 instead to Principal Components Analysis (PCA). Here I describe two
-new classes of algorithm for fitting mixture models to genotype data,
-which can result in practical computing times when analysing such
-large data sets. The first class are variational bayes
-
-*** Mixture models for genotype data
+new approaches for fitting mixture models to genotype data, which can
+result in practical computing times when analysing such large data
+sets. The first approach is variational Bayes. VB offers the
+possibility of obtaining approximate posterior densities via an
+EM-like hill-climbing algorithm. The second approach is parallel
+computing. This offers the possibility of reducing computation time in
+linear proportion to the number of processors available. I describe
+and implement parallel algorithms for EM, VB and MCMC.
+* Models
+*** Basic mixture model
+In the basic mixture modelling problem, n items {X_i,\ldots,X_n} have
+been observed and each is assumed to belong to one of K groups. Each
+item X_i has an unknown label Z_i \in {1,\ldots,K} indicating the
+group to which it belongs. Group k is characterised by a probability
+distribution f_{\phi_k}(x). The objective is inference for the
+collection of labels Z, which typically also requires inference for
+the parameters \phi_k. The ``No-Admixture Model'' of Pritchard et
+al. (2000) is an example of this class of models: X_i is a data set of
+multilocus genotypes for individual i, and \phi_k are the allele
+frequencies at each locus in group k.
+*** Admixture model
 A notable early contribution to the literature on mixture models for
 studying population structure (references above) is the ``Admixture
-Model'' (AM) introduced by Pritchard et al. (2000). In the basic
-mixture modelling problem, n items {X_i,\ldots,X_n} have been observed
-and each is assumed to belong to one of K groups. Each item X_i has an
-unknown label Z_i \in {1,\ldots,K} indicating the group to which it
-belongs. Group k is characterised by a probability distribution
-f_{\phi_k}(x). The objective is inference for the collection of labels
-Z, which typically also requires inference for the parameters
-\phi_k. The ``No-Admixture Model'' of Pritchard et al. (2000) is an
-example of this class of models: X_i is a data set of multilocus
-genotypes for individual i, and \phi_k are the allele frequencies at
-each locus in group k.
-
-In contrast, in the Admixture Model of PSD, alleles at different loci
-or on different chromosomes within a single individual may have been
-inherited from different groups. Thus Z_i is replaced by a matrix in
-which Z_ila is the label of the group from which the allele on
-chromosome a at locus l in individual i was inherited. In general it
-is not possible to infer the values of the Z_ila; instead we are
-interested in the genome-wide proportion Q_ik of ancestry for
+Model'' (AM) introduced by Pritchard et al. (2000) in which alleles at
+different loci or on different chromosomes within a single individual
+may have been inherited from different groups. Thus Z_i is replaced by
+a matrix in which Z_ila is the label of the group from which the
+allele on chromosome a at locus l in individual i was inherited. In
+general it is not possible to infer the values of the Z_ila; instead
+we are interested in the genome-wide proportion Q_ik of ancestry for
 individual i in group k.
 
+*** Notation
+The basic structure of the model is the same whether allowing
+admixture or not, and whether taking a Bayesian approach or making
+point estimates of model parameters:
 
 #+begin_src latex
-  \paragraph{}
-  The basic structure of the model is the same whether allowing admixture or not, and whether taking a Bayesian approach or making point estimates of model parameters:
   \begin{itemize}
   \item data $x$: $x_{ila}$ is the allele in individual $i$ at locus $l$ on chromosome $a \in \{1,2\} = {\{\text{maternal, paternal}\}}$. 
   \item number of populations (clusters) $K$
   \item model parameters $\theta$, including allele frequencies $\mu$
   \end{itemize}
-  The missing data $z$ are indicator variables specifying which observations derive from which populations.
-  Under the no-admixture model $z$ is of length $n$, and 
+#+end_src
+
+  The missing data $z$ are indicator variables specifying which
+  observations derive from which populations.  Under the no-admixture
+  model $z$ is of length $n$, and
+#+begin_src latex
   \begin{itemize}
   \item $z_{i}$ is the label of the population which generated $x_{i\cdot\cdot}$
   \end{itemize}
@@ -75,11 +85,13 @@ individual i in group k.
   \begin{itemize}
   \item $z_{ila}$ is the label of the population which generated $x_{ila}$
   \end{itemize}
-  
-  %\paragraph{}
-  %In both Bayesian and frequentist approaches, $z$ is treated as a random variable. Bayesian approaches treat $\theta$ as a random variable whereas frequentist approaches make point estimates of $\theta$.
 #+end_src
-***** The no-admixture model
+  # In both Bayesian and frequentist approaches, $z$ is treated as a
+  # random variable. Bayesian approaches treat $\theta$ as a random
+  # variable whereas frequentist approaches make point estimates of
+  # $\theta$.
+
+*** The no-admixture model
 #+begin_src latex
   \begin{itemize}
   \item $x_{ila} \in \{1,\ldots, J_{l}\}$ is the type of allele copy $a$ at locus $l$ in individual $i$.
@@ -92,7 +104,7 @@ individual i in group k.
   \item The prior on the mixture weights is Dirichlet$(\lambda^{0}_{1},\ldots,\lambda^{0}_{K})$
   \end{itemize}
 #+end_src
-***** The admixture model
+*** The admixture model
 #+begin_src latex
   \begin{itemize}
   \item Each observation $x_{ila}$ was generated from one of K populations.
@@ -103,7 +115,7 @@ individual i in group k.
   \end{itemize}
   The no-admixture model is a special case of the admixture model in which individual $i$'s admixture proportion is constrained to be $1$ for some unknown population $z_{i}$, and zero for all other populations. $\pi = (\pi_{1},\ldots, \pi_{K})$ now contains the unknown weights of the $K$ populations in the mixture.  
 #+end_src
-***** The admixture model with correlated allele frequencies
+*** The admixture model with correlated allele frequencies
 #+begin_src latex
   \begin{itemize}
   \item Correlation between populations is modeled by introducing an ancestral population with allele frequencies $\mu_{0} = \{\mu_{0lj}:l=1,\ldots,L; j=1,\ldots,J_{l}\}$
@@ -112,7 +124,8 @@ individual i in group k.
   \item The prior on $F_{k}$ is gamma$(\nu,\rho)$, the same for all $k$. 
   \end{itemize}
 #+end_src
-***** Variational Bayes overview
+* Fitting the models
+*** Variational Bayes overview
 #+begin_src latex
   \begin{equation*}
     p(\theta,z,x)  = p(x)p(\theta, z | x) ~~~~~ \Rightarrow ~~~~~ p(x) = \frac{p(\theta,z,x)}{p(\theta,z|x)} 
@@ -127,8 +140,7 @@ individual i in group k.
   The second term is the Kullback-Leibler divergence between $q(\theta,z)$ and the true posterior $p(\theta,z|x)$, and the first term is a functional that we'll call $F = F(q, p)$. $F$ is a function of the approximate posterior $q()$, which we'll update to make it similar to the true posterior, and the complete data likelihood $p(\theta,z,x)$ which we can evaluate. The LHS is a constant, so if we maximise $F(q,p)$, then the approximate posterior $q$ is approaching the true posterior, which is the goal.
   #+end_src
 
-***** Intuitive explanation of model fitting via EM and VB
-
+*** Intuitive explanation of model fitting via EM and VB
   #+begin_src latex
     Both methods work by repeating two steps:
           \begin{itemize}
@@ -136,13 +148,12 @@ individual i in group k.
           \item \textbf{M step}: use $p(z)$ to update parameter estimates
           \end{itemize}
           The difference is that in VB, the `parameters' are hyperparameters of the posterior densities of the `real' parameters, and $p(z)$ is an average over those posterior densities. In contrast, in EM, $p(z)$ is formed straightforwardly using point estimates of the parameters.
+  #+end_src
 
-	  #+end_src
-
-******* No admixture
-          In this case the parameters are $\mu$ (cluster allele frequencies) and $\pi$ (cluster intensities).
-          
-********* EM
+***** No admixture
+	In this case the parameters are $\mu$ (cluster allele frequencies) and $\pi$ (cluster intensities).
+	
+******* EM
 - E step ::
   For each $(i,k)$ compute 
 #+begin_src latex
@@ -162,7 +173,7 @@ individual i in group k.
   \mu_{lk} \leftarrow \frac{\sum_{i,a}x_{ila}p(z_{i}=k)}{\sum_{i,a}p(z_{i}=k)}
   \]
 #+end_src
-********* VB
+******* VB
 - E step ::
 #+begin_src latex
   for each $(i,k)$ compute 
@@ -181,6 +192,7 @@ update in which the hyperparameters of the posterior are the sum of
 `prior counts' and `expected counts', with the latter formed using the
 distribution $\tilde p(z|x)$.
 
+*** Parallel algorithm
 *** Fitting the no-admixture model via variational Bayes
 #+begin_src latex 
   \begin{itemize}
@@ -632,8 +644,6 @@ population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
   \mu = \frac{\sum_i x_i p_i(k) + \alpha F' -1}{\sum_i p_i(k) + F' - 2}
   \]
 #+end_src
-
-* Parallel algorithm
 * Results
 [[file:images/vbnam-simulation-results-n80-L1000-F.6-10runs.png]]
 * Discussion
