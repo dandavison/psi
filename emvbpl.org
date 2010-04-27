@@ -1,42 +1,43 @@
 #+title:Inference of population structure from large genotype data sets
 #+title:Variational Bayes and parallel computing for fitting mixture models to genotype data
-#+title:Variational Bayes and parallel algorithms for fitting mixture models to genotype data
 #+title:Inference of population structure from large genotype data sets: variational Bayes and parallel computing
+#+title:Variational Bayes and parallel algorithms for fitting mixture models to large genotype data sets
 #+author:Dan Davison
 #+date:\today
 
 * Introduction
-Inference of population structure is often the motivation for creating
-data sets of genetic variation at the level of species and
+Inference of population structure is often the main motivation for
+creating data sets of genetic variation at the level of species and
 populations. In addition, information about population structure is
 often required in other inference problems. A notable example is
 genome-wide association study of common diseases in humans. These
 studies seek to identify genomic regions within which genetic
-variation is associated with the phenotype of interest. Penetrance /
-effect sizes are typically very small for the phenotypes of interest,
-with the result that well-powered studies require large sample
-sizes. In this situation, subtle correlations between genome-wide
-ancestry and phenotype result in spurious association signals in a
-naive analysis. This problem can be avoided to a large degree if
-information about ancestry (i.e. population structure) is available.
+variation is associated with the phenotype of interest. Anticipated
+penetrance is typically very low for phenotypes of interest, with the
+result that well-powered studies require large sample sizes. In this
+situation, subtle correlations between genome-wide ancestry and
+phenotype result in spurious association signals in a naive
+analysis. This problem can be avoided to a large degree if information
+about ancestry (i.e. population structure) is available.
 
-Starting with the work of Pritchard et al. (2000), several studies
-have proposed Bayesian mixture models for multilocus genotype data
-with the objective of characterising population structure
-\ref{Pritchard et al., BAPS, geneland, structurama, Leslie?}, with the
-software of PSD remaining very widely-used. However, in the last five
-years those analysing large SNP data sets (10^5-10^6 loci, 10^3-10^4
-individuals) have largely abandoned these methods due to the long
-computing times required by the available implementations, turning
-instead to Principal Components Analysis (PCA). Here I describe two
-new approaches for fitting mixture models to genotype data, which can
-result in practical computing times when analysing such large data
-sets. The first approach is variational Bayes. VB offers the
-possibility of obtaining approximate posterior densities via an
-EM-like hill-climbing algorithm. The second approach is parallel
-computing. This offers the possibility of reducing computation time in
-linear proportion to the number of processors available. I describe
-and implement parallel algorithms for EM, VB and MCMC.
+Starting with the work of \cite{Pritchard_et_al_2000} (PSD), several
+studies have proposed Bayesian mixture models for multilocus genotype
+data with the objective of characterising population structure
+\cite{Pritchard_et_al_2000,Corander_et_al_2003,Guillot_et_al_2005,Huelsenbeck_Andolfatto_2007,Leslie_in_prep},
+with the software of PSD remaining very widely-used. However, in the
+last five years those analysing large SNP data sets (10^5-10^6 loci,
+10^3-10^4 individuals) have largely abandoned these methods due to the
+long computing times required by the available implementations,
+turning instead to Principal Components Analysis (PCA)
+\cite{Patterson,Price,Vukcevic?}. Here I describe two new approaches
+for fitting mixture models to genotype data, which can result in
+practical computing times when analysing such large data sets. The
+first approach is variational Bayes. VB offers the possibility of
+obtaining approximate posterior densities via an EM-like hill-climbing
+algorithm. The second approach is parallel computing. This offers the
+possibility of reducing computation time in linear proportion to the
+number of processors available. I describe and implement parallel
+algorithms for EM, VB and MCMC.
 * Overview of Paper
   :PROPERTIES:
   :ID:       36c71055-e7db-4325-8c63-ea62130b873e
@@ -46,57 +47,49 @@ models studies are the "No Admixture Model" and the "Admixture Model"
 of \ref{Pritchard_et_al_2000}, and the "F Model" of
 \ref{Falush_et_al_2003}. In section [[id:5e73e48a-3c1d-401a-85d4-af55e59c8dde][Fitting the models]] I describe new
 algorithms for fitting the three models. In each case I start with the
-EM algorithm which, although familiar, provides a helpful basis for
-describing the corresponding VB algorithm. Finally I describe parallel
-versions of the same algorithms. Additional derivation of the updates
-used are provided in the [[id:5b050c13-e5a3-4561-8623-54af42c27253][Appendix]]. Section [[id:6d8cbdfb-0be1-474d-8a5f-74dcecb78916][Results]] presents results of
-using the different methods to fit the models to simulated and real
+EM algorithm, which provides a helpful comparison with the
+corresponding VB algorithm. Finally I describe parallel versions of
+the same algorithms. Additional derivation of the updates used are
+provided in the [[id:5b050c13-e5a3-4561-8623-54af42c27253][Appendix]]. Section [[id:6d8cbdfb-0be1-474d-8a5f-74dcecb78916][Results]] presents results of using
+the different methods to fit the models to simulated and real
 data. Finally in section [[id:280c42eb-52a3-46ff-9812-61a38e0b82ae][Discussion]] I discuss potential applications
 of these methods. The algorithms are implemented in the software
-package =psi= available at [psi URL].
+package =psi= available at [psi URL]. Table \ref{tbl:notation}
+contains notation used throughout the paper.
+
+#+caption: Notation used throughout the paper
+#+label: tbl:notation
+| Notation | Meaning                                                               |
+|----------+-----------------------------------------------------------------------|
+| n        | Number of individuals                                                 |
+| L        | Number of marker loci                                                 |
+| i        | Indexes individuals: i \in {1,\ldots,n}                               |
+| l        | Indexes loci: l \in {1,\ldots,L}                                      |
+| a        | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                |
+| X_ila    | Allele on chromosome a at locus l in individual i                     |
+| K        | Number of groups in mixture model                                     |
+| \phi_k   | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?) |
+| \mu_lk   | Allele frequency at locus l in group k                                |
+
 * Models
   :PROPERTIES:
   :ID:       66e1ee52-b46d-4ce8-90bb-dd7e7b855d5a
   :END:
 
-*** Basic mixture model
-In the basic mixture modelling problem, n items {X_i,\ldots,X_n} have
-been observed and each is assumed to belong to one of K groups. Each
-item X_i has an unknown label Z_i \in {1,\ldots,K} indicating the
-group to which it belongs. Group k is characterised by a probability
-distribution f_{\phi_k}(x). The objective is inference for the
-collection of labels Z, which typically also requires inference for
-the parameters \phi_k. The ``No-Admixture Model'' of Pritchard et
-al. (2000) is an example of this class of models: X_i is a data set of
-multilocus genotypes for individual i, and \phi_k are the allele
-frequencies at each locus in group k.
-*** Admixture model
-A notable early contribution to the literature on mixture models for
-studying population structure (references above) is the ``Admixture
-Model'' (AM) introduced by Pritchard et al. (2000) in which alleles at
-different loci or on different chromosomes within a single individual
-may have been inherited from different groups. Thus Z_i is replaced by
-a matrix in which Z_ila is the label of the group from which the
-allele on chromosome a at locus l in individual i was inherited. In
-general it is not possible to infer the values of the Z_ila; instead
-we are interested in the genome-wide proportion Q_ik of ancestry for
-individual i in group k.
+*** Basic mixture model: the "No Admixture Model"
+In the basic mixture modelling problem, n items {X_i,\ldots,X_n} are
+observed and each is assumed to belong to one of K groups. Each item
+X_i has an unknown label Z_i \in {1,\ldots,K} indicating the group to
+which it belongs. The main objectives are to learn about the values of
+these labels, and about the value of K. Group k is characterised by a
+probability distribution f_{\phi_k}(x), and inference for K and Z
+typically also requires inference for the parameters \phi_k. The
+``No-Admixture Model'' of Pritchard et al. (2000) is an example of
+this class of models: X_i is a data set of multilocus genotypes for
+individual i, and \phi_k are the allele frequencies at each locus in
+group k.
 
-*** Notation
-The basic structure of the model is the same whether allowing
-admixture or not, and whether taking a Bayesian approach or making
-point estimates of model parameters:
-
-#+begin_src latex
-  \begin{itemize}
-  \item data $x$: $x_{ila}$ is the allele in individual $i$ at locus $l$ on chromosome $a \in \{1,2\} = {\{\text{maternal, paternal}\}}$. 
-  \item number of populations (clusters) $K$
-  \item model parameters $\theta$, including allele frequencies $\mu$
-  \end{itemize}
-#+end_src
-
-  The missing data $z$ are indicator variables specifying which
-  observations derive from which populations.  Under the no-admixture
+Under the no-admixture
   model $z$ is of length $n$, and
 #+begin_src latex
   \begin{itemize}
@@ -111,8 +104,6 @@ point estimates of model parameters:
   # random variable. Bayesian approaches treat $\theta$ as a random
   # variable whereas frequentist approaches make point estimates of
   # $\theta$.
-
-*** The no-admixture model
 #+begin_src latex
   \begin{itemize}
   \item $x_{ila} \in \{1,\ldots, J_{l}\}$ is the type of allele copy $a$ at locus $l$ in individual $i$.
@@ -125,7 +116,19 @@ point estimates of model parameters:
   \item The prior on the mixture weights is Dirichlet$(\lambda^{0}_{1},\ldots,\lambda^{0}_{K})$
   \end{itemize}
 #+end_src
-*** The admixture model
+
+*** Admixture model
+A notable early contribution to the literature on mixture models for
+studying population structure (references above) is the ``Admixture
+Model'' (AM) introduced by \ref{Pritchard_et_al_2000} in which alleles
+at different loci or on different chromosomes within a single
+individual may have been inherited from different groups. Thus Z_i is
+replaced by a matrix in which Z_ila is the label of the group from
+which the allele on chromosome a at locus l in individual i was
+inherited. In general it is not possible to infer the values of the
+Z_ila; instead we are interested in the genome-wide proportion Q_ik of
+ancestry for individual i in group k.
+
 #+begin_src latex
   \begin{itemize}
   \item Each observation $x_{ila}$ was generated from one of K populations.
@@ -149,21 +152,6 @@ point estimates of model parameters:
   :PROPERTIES:
   :ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
   :END:
-*** Variational Bayes overview
-#+begin_src latex
-  \begin{equation*}
-    p(\theta,z,x)  = p(x)p(\theta, z | x) ~~~~~ \Rightarrow ~~~~~ p(x) = \frac{p(\theta,z,x)}{p(\theta,z|x)} 
-  \end{equation*}
-  Now take logs and integrate w.r.t. some distribution $q(\theta,z)$ (this will be the approximate posterior on $(\theta,z)$ and we will choose it to have a convenient parametric form).
-  \begin{align*}
-    \log p(x) &=~ \int \log p(\theta,z,x) q(\theta, z) d\theta dz - \int \log p(\theta,z|x) q(\theta,z) d\theta dz
-  \intertext{which is the same as}
-    \log p(x) &=~ \int \log \frac{p(\theta,z,x)}{q(\theta,z)} q(\theta, z) d\theta dz - \int \log \frac{p(\theta,z|x)}{q(\theta,z)} q(\theta,z) d\theta dz \\
-  &= F(q,p) + d_{KL}\Big(q(\theta,z) ~||~ p(\theta,z|x)\Big).
-  \end{align*}
-  The second term is the Kullback-Leibler divergence between $q(\theta,z)$ and the true posterior $p(\theta,z|x)$, and the first term is a functional that we'll call $F = F(q, p)$. $F$ is a function of the approximate posterior $q()$, which we'll update to make it similar to the true posterior, and the complete data likelihood $p(\theta,z,x)$ which we can evaluate. The LHS is a constant, so if we maximise $F(q,p)$, then the approximate posterior $q$ is approaching the true posterior, which is the goal.
-  #+end_src
-
 *** Intuitive explanation of model fitting via EM and VB
   #+begin_src latex
     Both methods work by repeating two steps:
@@ -173,7 +161,6 @@ point estimates of model parameters:
           \end{itemize}
           The difference is that in VB, the `parameters' are hyperparameters of the posterior densities of the `real' parameters, and $p(z)$ is an average over those posterior densities. In contrast, in EM, $p(z)$ is formed straightforwardly using point estimates of the parameters.
   #+end_src
-
 ***** No admixture
 	In this case the parameters are $\mu$ (cluster allele frequencies) and $\pi$ (cluster intensities).
 	
@@ -215,6 +202,20 @@ $\mu$ and $\pi$. This turns out to be a standard dirichlet-multinomial
 update in which the hyperparameters of the posterior are the sum of
 `prior counts' and `expected counts', with the latter formed using the
 distribution $\tilde p(z|x)$.
+*** Variational Bayes overview
+#+begin_src latex
+  \begin{equation*}
+    p(\theta,z,x)  = p(x)p(\theta, z | x) ~~~~~ \Rightarrow ~~~~~ p(x) = \frac{p(\theta,z,x)}{p(\theta,z|x)} 
+  \end{equation*}
+  Now take logs and integrate w.r.t. some distribution $q(\theta,z)$ (this will be the approximate posterior on $(\theta,z)$ and we will choose it to have a convenient parametric form).
+  \begin{align*}
+    \log p(x) &=~ \int \log p(\theta,z,x) q(\theta, z) d\theta dz - \int \log p(\theta,z|x) q(\theta,z) d\theta dz
+  \intertext{which is the same as}
+    \log p(x) &=~ \int \log \frac{p(\theta,z,x)}{q(\theta,z)} q(\theta, z) d\theta dz - \int \log \frac{p(\theta,z|x)}{q(\theta,z)} q(\theta,z) d\theta dz \\
+  &= F(q,p) + d_{KL}\Big(q(\theta,z) ~||~ p(\theta,z|x)\Big).
+  \end{align*}
+  The second term is the Kullback-Leibler divergence between $q(\theta,z)$ and the true posterior $p(\theta,z|x)$, and the first term is a functional that we'll call $F = F(q, p)$. $F$ is a function of the approximate posterior $q()$, which we'll update to make it similar to the true posterior, and the complete data likelihood $p(\theta,z,x)$ which we can evaluate. The LHS is a constant, so if we maximise $F(q,p)$, then the approximate posterior $q$ is approaching the true posterior, which is the goal.
+  #+end_src
 
 *** Parallel algorithm
 *** Fitting the no-admixture model via variational Bayes
@@ -488,7 +489,8 @@ population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
   :PROPERTIES:
   :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
   :END:
-[[file:images/vbnam-simulation-results-n80-L1000-F.6-10runs.png]]
+  #+ATTR_LaTeX: width=15cm
+  [[file:images/vbnam-simulation-results-n80-L1000-Fpoint6-10runs.png]]
 * Discussion
   :PROPERTIES:
   :ID:       280c42eb-52a3-46ff-9812-61a38e0b82ae
@@ -688,8 +690,29 @@ averaging across all loci.
   \]
 #+end_src
 
-* 							   :noexport:
+* References
+\bibliographystyle{elsarticle-num-names}
+\bibliography{dan}
+* Notes								   :noexport:
+  - Focus on SNP data?
+
+* 								   :noexport:
+#+begin_src emacs-lisp :exports results
+  ;; (setq org-latex-to-pdf-process '("latex %s"))
+  (setq org-export-latex-classes
+        '(("article"
+           "\\documentclass{article}
+  [EXTRA]
+  [PACKAGES]"
+           ("\\section{%s}" . "\\section*{%s}")
+           ("\\subsection{%s}" . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+           ("\\paragraph{%s}" . "\\paragraph*{%s}")
+           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+#+end_src
+
 #+latex_header: \usepackage{amsmath}
+#+latex_header: \usepackage{amssymb}
 #+latex_header: \usepackage{mathrsfs}
 #+latex_header: \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
 #+latex_header: \newcommand{\E}{\text{E}{}}
