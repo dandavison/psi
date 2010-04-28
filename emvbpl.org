@@ -43,127 +43,167 @@ parallel algorithms for EM, VB and MCMC.
   :PROPERTIES:
   :ID:       36c71055-e7db-4325-8c63-ea62130b873e
   :END:
-In section \ref{sec:models} I describe the models and introduce notation. The
-models studied are the "No Admixture Model" and the "Admixture Model"
-of \cite{Pritchard_et_al_2000}, and the "F Model" of
-\cite{Falush_et_al_2003}. In section \ref{sec:model-fitting} I describe new
-algorithms for fitting the three models. In each case I start with the
-EM algorithm, which provides a helpful comparison with the
-corresponding VB algorithm. Finally I describe parallel versions of
-the same algorithms. Additional derivation of the updates used are
-provided in the \ref{sec:appendix}. Section \ref{sec:results} presents results of using
-the different methods to fit the models to simulated and real
-data. Finally in section \ref{sec:discussion} I discuss potential applications
-of these methods. The algorithms are implemented in the software
-package =psi= available at [psi URL]. Table \ref{tbl:notation}
-contains notation used throughout the paper.
+In section \ref{sec:models} I describe the models and introduce
+notation. The models studied are the "No Admixture Model" and the
+"Admixture Model" of \cite{Pritchard_et_al_2000}, and the "F Model" of
+\cite{Falush_et_al_2003}. In section \ref{sec:model-fitting} I
+describe new algorithms for fitting the three models. In each case I
+start with the EM algorithm, which provides a helpful comparison with
+the corresponding VB algorithm. Finally I describe parallel versions
+of the same algorithms. Additional derivation of the updates used are
+provided in the \ref{sec:appendix}. Section \ref{sec:results} presents
+results of using the different methods to fit the models to simulated
+and real data. Finally in section \ref{sec:discussion} I discuss
+potential applications of these methods. The algorithms are
+implemented in the software package =psi= available at [psi
+URL]. Table \ref{tbl:notation} contains notation used throughout the
+paper.
 
 #+caption: Notation used throughout the paper
 #+label: tbl:notation
-| Notation | Meaning                                                               |
-|----------+-----------------------------------------------------------------------|
-| n        | Number of individuals                                                 |
-| L        | Number of marker loci                                                 |
-| i        | Indexes individuals: i \in {1,\ldots,n}                               |
-| l        | Indexes loci: l \in {1,\ldots,L}                                      |
-| a        | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                |
-| X_ila    | Allele on chromosome a at locus l in individual i                     |
-| K        | Number of groups in mixture model                                     |
-| \phi_k   | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?) |
-| \mu_lk   | Allele frequency at locus l in group k                                |
+| Notation           | Meaning                                                                                           |
+|--------------------+---------------------------------------------------------------------------------------------------|
+| n                  | Number of individuals                                                                             |
+| L                  | Number of marker loci                                                                             |
+| J_l                | Number of alleles at locus l                                                                      |
+| K                  | Number of groups in mixture model                                                                 |
+| i                  | Indexes individuals: i \in {1,\ldots,n}                                                           |
+| l                  | Indexes loci: l \in {1,\ldots,L}                                                                  |
+| j                  | Indexes alleles: j \in {1,\ldots,J_l}                                                             |
+| a                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                            |
+| X_ila              | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}           |
+| \phi_k             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                             |
+| P_lk               | Allele frequencies at locus l in group k                                                          |
+| \alpha_j^{(0)}     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                       |
+| \alpha_lkj^{(1)}   | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                 |
+|$~$                 |                                                                                                   |
+|                    |                                                                                                   |
+| No Admixture Model |                                                                                                   |
+|--------------------+---------------------------------------------------------------------------------------------------|
+| Z_i                | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                        |
+| \pi_k              | Intensity of group k in the mixture                                                               |
+|$~$                 |                                                                                                   |
+|                    |                                                                                                   |
+| Admixture Model    |                                                                                                   |
+|--------------------+---------------------------------------------------------------------------------------------------|
+| Z_ila              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K} |
+| Q_ik               | Unknown genome-wide proportion of ancestry of individual i from group k                           |
+| \lambda_k^{(0)}    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                       |
+| \lambda_{ik}^{(1)} | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                    |
 
 * Models
   :PROPERTIES:
   :ID:       66e1ee52-b46d-4ce8-90bb-dd7e7b855d5a
   :END:
 #+latex: \label{sec:models}
-
-*** Basic mixture model: the "No Admixture Model"
+  
+*** Basic mixture model: the No Admixture Model
 In the basic mixture modelling problem, n items {X_i,\ldots,X_n} are
 observed and each is assumed to belong to one of K groups. Each item
 X_i has an unknown label Z_i \in {1,\ldots,K} indicating the group to
 which it belongs. The main objectives are to learn about the values of
 these labels, and about the value of K. Group k is characterised by a
-probability distribution f_{\phi_k}(x), and inference for K and Z
-typically also requires inference for the parameters \phi_k. The
-``No-Admixture Model'' of Pritchard et al. (2000) is an example of
-this class of models: X_i is a data set of multilocus genotypes for
-individual i, and \phi_k are the allele frequencies at each locus in
-group k.
+probability distribution f(x;\phi_k), and inference for K and Z
+typically also requires inference for the parameters \phi_k.
 
-Under the no-admixture
-  model $z$ is of length $n$, and
-#+begin_src latex
-  \begin{itemize}
-  \item $z_{i}$ is the label of the population which generated $x_{i\cdot\cdot}$
-  \end{itemize}
-  Under the admixture model $z$ has the same dimensions as the data and
-  \begin{itemize}
-  \item $z_{ila}$ is the label of the population which generated $x_{ila}$
-  \end{itemize}
+The ``No-Admixture Model'' of Pritchard et al. (2000) is an example of
+this class of models: X_i is a data set of multilocus genotypes for
+individual i. Hardy-Weinberg and linkage equilibrium are assumed and
+\phi_k contains the allele frequencies at each locus in group k. The
+prior distributions of the allele frequencies are Dirichlet with
+hyperparameters \alpha^{(0)}, independently across loci and
+groups. The following algorithm simulates a data set from this model.
+
+#+begin_src python
+for each individual i:
+        Z_i \sim \pi
+
+for each locus l:
+    for each group k:
+        P_lk \sim Dirichlet(\alpha)
+    for each individual i:
+        for each chromosome a:
+            X_ila \sim P_lk
 #+end_src
-  # In both Bayesian and frequentist approaches, $z$ is treated as a
-  # random variable. Bayesian approaches treat $\theta$ as a random
-  # variable whereas frequentist approaches make point estimates of
-  # $\theta$.
-#+begin_src latex
-  \begin{itemize}
-  \item $x_{ila} \in \{1,\ldots, J_{l}\}$ is the type of allele copy $a$ at locus $l$ in individual $i$.
-  \item Each observation $x_{i}=\{x_{ila}:l=1,\ldots,L;a=1,2\}$ was generated from one of K populations.
-  \item $z_{i}$ is the (unknown) label of the population which generated $x_{i}$.
-  \item allele $j$ at locus $l$ in population $k$ has frequency $\mu_{lkj}$.
-  \item $p(x_{ila} = j | z_{i}=k) = \mu_{lkj}$ independently for each $(i,l,a)$
-  \item The prior on the allele frequencies $\mu_{kl\cdot}$ in population $k$ is Dirichlet$(\alpha^{0}_{1},\ldots,\alpha^{0}_{J_{l}})$, independently for each $(l,k)$.
-  \item $\pi_{k}$ is the mixture weight for population $k$.
-  \item The prior on the mixture weights is Dirichlet$(\lambda^{0}_{1},\ldots,\lambda^{0}_{K})$
-  \end{itemize}
-#+end_src
+
+See PSD for further details.
 
 *** Admixture model
-A notable early contribution to the literature on mixture models for
-studying population structure (references above) is the ``Admixture
-Model'' (AM) introduced by \ref{Pritchard_et_al_2000} in which alleles
-at different loci or on different chromosomes within a single
-individual may have been inherited from different groups. Thus Z_i is
-replaced by a matrix in which Z_ila is the label of the group from
-which the allele on chromosome a at locus l in individual i was
-inherited. In general it is not possible to infer the values of the
-Z_ila; instead we are interested in the genome-wide proportion Q_ik of
-ancestry for individual i in group k.
+An important early contribution to the literature on mixture models
+for studying population structure (references above) is the
+``Admixture Model'' (AM) introduced by \ref{Pritchard_et_al_2000}, in
+which alleles at different loci or on different chromosomes within a
+single individual may have been inherited from different groups. Thus
+the integer-valued labels Z_i become integer-valued matrices in which
+Z_ila is the label of the group from which the allele on chromosome a
+at locus l in individual i was inherited. In general it is not
+possible to infer the values of the Z_ila; instead we are interested
+in the genome-wide proportion Q_ik of ancestry for individual i in
+group k.  The prior distributions of the ancestry proportions are
+Dirichlet with hyperparameters \lambda^{(0)}, independently across
+individuals, and the prior for the allele frequencies is the same as
+in the No Admixture Model. The following algorithm simulates a data
+set from the Admixture Model model.
 
-#+begin_src latex
-  \begin{itemize}
-  \item Each observation $x_{ila}$ was generated from one of K populations.
-  \item $z_{ila}$ is the (unknown) label of the population which generated $x_{ila}$.
-  \item $p(x_{ila} = j | z_{ila}=k) = \mu_{lkj}$ independently for each $(i,l,a)$
-  \item $\pi_{ik}$ is the proportion of individual $i$'s genome that derives from population $k$.
-  \item The prior on the admixture proportions $\pi_{i\cdot}$ for individual $i$ is Dirichlet $(\lambda^{0}_{i1},\ldots,\lambda^{0}_{iK})$
-  \end{itemize}
-  The no-admixture model is a special case of the admixture model in which individual $i$'s admixture proportion is constrained to be $1$ for some unknown population $z_{i}$, and zero for all other populations. $\pi = (\pi_{1},\ldots, \pi_{K})$ now contains the unknown weights of the $K$ populations in the mixture.  
+# FIXME: \pi, intensities
+
+#+begin_src python
+for each individual i:
+        Q_i \sim Dirichlet(\pi)
+
+for each locus l:
+    for each group k:
+        P_lk \sim Dirichlet(\alpha^{(0)})
+    for each individual i:
+        for each chromosome a:
+	    Z_ila \sim Q_i
+            X_ila \sim P_{l Z_{ila}}
 #+end_src
-*** The admixture model with correlated allele frequencies
-#+begin_src latex
-  \begin{itemize}
-  \item Correlation between populations is modeled by introducing an ancestral population with allele frequencies $\mu_{0} = \{\mu_{0lj}:l=1,\ldots,L; j=1,\ldots,J_{l}\}$
-  \item The prior on the ancestral allele frequencies is $p(\mu_{0l\cdot}) = \text{Dirichlet}(\alpha^{0}_{1},\ldots,\alpha^{0}_{J_{l}})$
-  \item At locus $l$, conditionally on $\mu_{0l\cdot}$, the $\mu_{kl\cdot}$ are distributed as Dirichlet$(\mu_{0l1}\frac{1-F_{k}}{F_{k}},\ldots,\mu_{0lJ_{l}}\frac{1-F_{k}}{F_{k}})$. Thus if $F_{k}$ is small, the allele frequency distributions in population $k$ are likely to be similar to those in the ancestral population.
-  \item The prior on $F_{k}$ is gamma$(\nu,\rho)$, the same for all $k$. 
-  \end{itemize}
-#+end_src
+
+*** The F model
+The F model of \cite{Nicholson,Falush_et_al_2003} models shared
+ancestry of populations by introducing to the model an ancestral
+population. The populations in the mixture are characterised by allele
+frequencies which depend on the frequency in the ancestral
+population. The following algorithm simulates a data set under the F
+model without admixture. The extension to admixture is obvious by
+comparison with algorithm \ref{alg:am-sim} above.
+
+=FIXME: move this to later?=
+
 * Fitting the models
   :PROPERTIES:
   :ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
   :END:
   #+latex: \label{sec:model-fitting}
-*** Intuitive explanation of model fitting via EM and VB
-  #+begin_src latex
-    Both methods work by repeating two steps:
-          \begin{itemize}
-          \item \textbf{E step}: form probability distribution $p(z)$ on cluster indicators, using current parameter estimates
-          \item \textbf{M step}: use $p(z)$ to update parameter estimates
-          \end{itemize}
-          The difference is that in VB, the `parameters' are hyperparameters of the posterior densities of the `real' parameters, and $p(z)$ is an average over those posterior densities. In contrast, in EM, $p(z)$ is formed straightforwardly using point estimates of the parameters.
-  #+end_src
+  \citeasnoun{Pritchard_et_al_2000} and \citeasnoun{Falush_et_al_2003}
+  described how to fit the above models using MCMC. In this section I
+  describe how to fit these models using Variational Bayes (VB). The
+  basic idea of VB is to assume a particular parametric form for the
+  posterior density, and then to optimize the values of the
+  hyperparameters. Thus in principle VB makes Bayesian posterior
+  densities available without imposing the computational burden of
+  exploring the support of the posterior via a Markov-chain sampler.
+
+The VB
+  algorithm bears a strong similarity to an Expectation-Maximization
+  (EM) algorithm. A simple heuristic description is that both methods
+  work by iterating the following steps:
+
+  1. E step :: Compute the discrete probability distribution \Pr(Z|X)
+     on the unknown cluster indicators, using current parameter
+     estimates.
+  2. M step :: Use the current distribution \Pr(Z|X) to update
+     parameter estimates.
+
+    The difference is that in VB, we have assumed a particular
+    parametric form for the posterior densities, and in the above the
+    term `parameters' is referring to hyperparameters of the posterior
+    densities of the `real' parameters (\Pr(Z|X) is formed by
+    averaging over the current posterior densities). In contrast, in
+    EM, \Pr(Z|X) is formed straightforwardly using point estimates of
+    the parameters.
+
 ***** No admixture
 	In this case the parameters are $\mu$ (cluster allele frequencies) and $\pi$ (cluster intensities).
 	
@@ -703,20 +743,53 @@ averaging across all loci.
 * Notes								   :noexport:
   - Focus on SNP data?
 
-* 								   :noexport:
+* Config 							   :noexport:
+*** Org config
 #+begin_src emacs-lisp :exports results
-  (setq org-latex-to-pdf-process '("pdflatex %s" "bibtex %b" "pdflatex %s"))
-  (setq org-export-latex-classes
-        '(("article"
-           "\\documentclass{article}
-  [EXTRA]
-  [PACKAGES]"
-           ("\\section{%s}" . "\\section*{%s}")
-           ("\\subsection{%s}" . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-           ("\\paragraph{%s}" . "\\paragraph*{%s}")
-           ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+(setq org-src-preserve-indentation t
+      org-latex-to-pdf-process '("make pdf")
+      org-export-latex-classes
+      '(("article"
+         "\\documentclass{article}
+[EXTRA]
+[PACKAGES]"
+         ("\\section{%s}" . "\\section*{%s}")
+         ("\\subsection{%s}" . "\\subsection*{%s}")
+         ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+         ("\\paragraph{%s}" . "\\paragraph*{%s}")
+         ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
 #+end_src
+
+#+results:
+: t
+*** Makefile
+#+begin_src makefile :tangle Makefile :noweb no
+BASE = emvbpl
+AUX = $(BASE).aux
+BBL = $(BASE).bbl
+TEX = $(BASE).tex
+JUNK = $(BASE).toc $(BASE).out $(BASE).log $(BASE).blg $(BASE).dvi
+
+LATEX = pdflatex
+BIBTEX = bibtex
+
+
+$(AUX): 
+	$(LATEX) $(BASE) > /dev/null
+
+$(BIB): $(AUX)
+	bibtex $(BASE)
+
+pdf: 	$(BIB)
+	$(LATEX) $(BASE) > /dev/null
+	bibtex $(BASE)
+	$(LATEX) $(BASE) > /dev/null
+
+clean:
+	rm -f $(AUX) $(BBL) $(JUNK)
+#+end_src
+
+
 #+latex_header: \usepackage[sectionbib]{natbib}
 #+latex_header: \bibpunct{(}{)}{,}{a}{}{,}
 #+latex_header: \usepackage{amsmath}
@@ -736,3 +809,4 @@ averaging across all loci.
 #+latex_header: \renewcommand*{\labelitemii}{\labelitemi}
 #+latex_header: \renewcommand*{\labelitemiii}{\labelitemi}
 #+latex_header: \renewcommand*{\labelitemiv}{\labelitemi}
+        
