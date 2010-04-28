@@ -20,17 +20,17 @@ phenotype result in spurious association signals in a naive
 analysis. This problem can be avoided to a large degree if information
 about ancestry (i.e. population structure) is available.
 
-Starting with the work of \cite{Pritchard_et_al_2000} (PSD), whose
+Starting with the work of \citet{Pritchard_et_al_2000} (PSD), whose
 software package =structure= has been widely used during the last
 decade, several studies have developed Bayesian mixture models for
 multilocus genotype data with the objective of characterising
-population structure \cite{Pritchard_et_al_2000, Corander_et_al_2003,
+population structure \citep{Pritchard_et_al_2000, Corander_et_al_2003,
 Guillot_et_al_2005, Huelsenbeck_Andolfatto_2007,
 Leslie_in_prep}. However, in the last five years those analysing large
 SNP data sets (10^5-10^6 loci, 10^3-10^4 individuals) have largely
 abandoned these methods due to the long computing times required by
 the available implementations, turning instead to Principal Components
-Analysis (PCA) \cite{Patterson,Price,Vukcevic?}. Here I describe two
+Analysis (PCA) \citep{Patterson,Price,Vukcevic?}. Here I describe two
 new approaches for fitting mixture models to genotype data, which can
 result in practical computing times when analysing such large data
 sets. The first approach is variational Bayes. VB offers the
@@ -45,8 +45,8 @@ parallel algorithms for EM, VB and MCMC.
   :END:
 In section \ref{sec:models} I describe the models and introduce
 notation. The models studied are the "No Admixture Model" and the
-"Admixture Model" of \cite{Pritchard_et_al_2000}, and the "F Model" of
-\cite{Falush_et_al_2003}. In section \ref{sec:model-fitting} I
+"Admixture Model" of \citet{Pritchard_et_al_2000}, and the "F Model" of
+\citet{Falush_et_al_2003}. In section \ref{sec:model-fitting} I
 describe new algorithms for fitting the three models. In each case I
 start with the EM algorithm, which provides a helpful comparison with
 the corresponding VB algorithm. Finally I describe parallel versions
@@ -106,12 +106,17 @@ these labels, and about the value of K. Group k is characterised by a
 probability distribution f(x;\phi_k), and inference for K and Z
 typically also requires inference for the parameters \phi_k.
 
-The ``No-Admixture Model'' of Pritchard et al. (2000) is an example of
-this class of models: X_i is a data set of multilocus genotypes for
-individual i. Hardy-Weinberg and linkage equilibrium are assumed and
-\phi_k contains the allele frequencies at each locus in group k. The
-prior distributions of the allele frequencies are Dirichlet with
-hyperparameters \alpha^{(0)}, independently across loci and
+The ``No-Admixture Model'' of \citet{Pritchard_et_al_2000} is an
+example of this class of models: X_i is a data set of multilocus
+genotypes for individual i and the "groups" can be thought of as
+idealized biological populations from which the study individuals have
+ancestry. These populations are fully characterised by the allele
+frequencies at each locus. Hardy-Weinberg and linkage equilibrium are
+assumed so that the data for an individual from population k would be
+simulated from the prior by drawing alleles from the allele frequency
+distribution for population k, independently across chromosomes and
+loci. The prior distributions of the allele frequencies are Dirichlet
+with hyperparameters \alpha^{(0)}, independently across loci and
 groups. The following algorithm simulates a data set from this model.
 
 #+begin_src python
@@ -131,21 +136,21 @@ See PSD for further details.
 *** Admixture model
 An important early contribution to the literature on mixture models
 for studying population structure (references above) is the
-``Admixture Model'' (AM) introduced by \ref{Pritchard_et_al_2000}, in
-which alleles at different loci or on different chromosomes within a
-single individual may have been inherited from different groups. Thus
-the integer-valued labels Z_i become integer-valued matrices in which
-Z_ila is the label of the group from which the allele on chromosome a
-at locus l in individual i was inherited. In general it is not
-possible to infer the values of the Z_ila; instead we are interested
-in the genome-wide proportion Q_ik of ancestry for individual i in
-group k.  The prior distributions of the ancestry proportions are
-Dirichlet with hyperparameters \lambda^{(0)}, independently across
-individuals, and the prior for the allele frequencies is the same as
-in the No Admixture Model. The following algorithm simulates a data
-set from the Admixture Model model.
+``Admixture Model'' (AM) introduced by \citet{Pritchard_et_al_2000},
+in which alleles at different loci or on different chromosomes within
+a single individual may have been inherited from different
+groups. Thus the integer-valued labels Z_i become integer-valued
+matrices in which Z_ila is the label of the group from which the
+allele on chromosome a at locus l in individual i was inherited. In
+general it is not possible to infer the values of the Z_ila; instead
+we are interested in the genome-wide proportion Q_ik of ancestry for
+individual i in group k.  The prior distributions of the ancestry
+proportions are Dirichlet with hyperparameters \lambda^{(0)},
+independently across individuals, and the prior for the allele
+frequencies is the same as in the No Admixture Model. The following
+algorithm simulates a data set from the Admixture Model model.
 
-# FIXME: \pi, intensities
+=FIXME: \pi or \lambda?=
 
 #+begin_src python
 for each individual i:
@@ -161,9 +166,9 @@ for each locus l:
 #+end_src
 
 *** The F model
-The F model of \cite{Nicholson,Falush_et_al_2003} models shared
-ancestry of populations by introducing to the model an ancestral
-population. The populations in the mixture are characterised by allele
+The F model of \citet{Nicholson,Falush_et_al_2003} models shared
+ancestry of populations by introducing an ancestral population into
+the model. The populations in the mixture are characterised by allele
 frequencies which depend on the frequency in the ancestral
 population. The following algorithm simulates a data set under the F
 model without admixture. The extension to admixture is obvious by
@@ -171,12 +176,12 @@ comparison with algorithm \ref{alg:am-sim} above.
 
 =FIXME: move this to later?=
 
-* Fitting the models
+* Fitting the models via Variational Bayes
   :PROPERTIES:
   :ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
   :END:
   #+latex: \label{sec:model-fitting}
-  \citeasnoun{Pritchard_et_al_2000} and \citeasnoun{Falush_et_al_2003}
+  \citet{Pritchard_et_al_2000} and \citet{Falush_et_al_2003}
   described how to fit the above models using MCMC. In this section I
   describe how to fit these models using Variational Bayes (VB). The
   basic idea of VB is to assume a particular parametric form for the
@@ -185,66 +190,24 @@ comparison with algorithm \ref{alg:am-sim} above.
   densities available without imposing the computational burden of
   exploring the support of the posterior via a Markov-chain sampler.
 
-The VB
-  algorithm bears a strong similarity to an Expectation-Maximization
-  (EM) algorithm. A simple heuristic description is that both methods
-  work by iterating the following steps:
+  The VB algorithm bears a strong similarity to an
+  Expectation-Maximization (EM) algorithm, and a simple heuristic
+  description is that both methods work by iterating the following
+  steps,
 
   1. E step :: Compute the discrete probability distribution \Pr(Z|X)
-     on the unknown cluster indicators, using current parameter
+     on the unknown cluster indicators, using the current parameter
      estimates.
-  2. M step :: Use the current distribution \Pr(Z|X) to update
+  2. M step :: Use the current distribution \Pr(Z|X) to update the
      parameter estimates.
 
-    The difference is that in VB, we have assumed a particular
-    parametric form for the posterior densities, and in the above the
-    term `parameters' is referring to hyperparameters of the posterior
-    densities of the `real' parameters (\Pr(Z|X) is formed by
-    averaging over the current posterior densities). In contrast, in
-    EM, \Pr(Z|X) is formed straightforwardly using point estimates of
-    the parameters.
+    with the difference being that in EM, \Pr(Z|X) is formed
+    straightforwardly using point estimates of the parameters P and
+    Q. In contrast, in VB the term `parameters' refers to
+    hyperparameters \alpha^{(1)} and \lambda^{(1)} of the posterior
+    density, and \Pr(Z|X) is formed by averaging over the current
+    posterior densities.
 
-***** No admixture
-	In this case the parameters are $\mu$ (cluster allele frequencies) and $\pi$ (cluster intensities).
-	
-******* EM
-- E step ::
-  For each $(i,k)$ compute 
-#+begin_src latex
-  \begin{align*}
-    p(z_{i} = k| x_{i}) &\propto p(z_{i}=k)p(x_{i}|z_{i}=k) \\
-            &= \pi_{k}\prod_{l}\prod_{a=1}^{2}\mu_{lk}^{x_{ila}}(1-\mu_{lk})^{1-x_{ila}}
-  \end{align*}
-#+end_src
-- M step ::
-  Use $p(z)$ to estimate $\mu$ and $\pi$ in the natural way. I.e. the cluster intensities are estimated by 
-#+begin_src latex
-  \[
-  \pi_{k} \leftarrow \frac{1}{n}\sum_{i}p(z_{i}=k),
-  \]
-   and the allele frequencies are estimated by
-  \[
-  \mu_{lk} \leftarrow \frac{\sum_{i,a}x_{ila}p(z_{i}=k)}{\sum_{i,a}p(z_{i}=k)}
-  \]
-#+end_src
-******* VB
-- E step ::
-#+begin_src latex
-  for each $(i,k)$ compute 
-  \[
-  \tilde p(z_{i} = k| x_{i}) = \exp\{\E_{q(\mu,\pi)} ~ \log p(z_{i}|x_{i},\mu,\pi)\}.
-  \]
-#+end_src
-    I.e. compute the same quantity as in the EM algorithm, but
-    log-averaged over the (current) posterior densities of \mu and
-    \pi, rather than using (current) point estimates.
-
-- M step :: 
-Use $\tilde p(z|x)$ to update the posterior densities of
-$\mu$ and $\pi$. This turns out to be a standard dirichlet-multinomial
-update in which the hyperparameters of the posterior are the sum of
-`prior counts' and `expected counts', with the latter formed using the
-distribution $\tilde p(z|x)$.
 *** Variational Bayes overview
 #+begin_src latex
   \begin{equation*}
@@ -259,8 +222,47 @@ distribution $\tilde p(z|x)$.
   \end{align*}
   The second term is the Kullback-Leibler divergence between $q(\theta,z)$ and the true posterior $p(\theta,z|x)$, and the first term is a functional that we'll call $F = F(q, p)$. $F$ is a function of the approximate posterior $q()$, which we'll update to make it similar to the true posterior, and the complete data likelihood $p(\theta,z,x)$ which we can evaluate. The LHS is a constant, so if we maximise $F(q,p)$, then the approximate posterior $q$ is approaching the true posterior, which is the goal.
   #+end_src
+*** No admixture
+In this case the parameters are P (allele frequencies) and
+$\pi$ (cluster intensities).
+	
+***** EM
+- E step :: For each $(i,k)$ compute
+#+begin_src latex
+\begin{align*}
+  \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
+  &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
+\end{align*}
+#+end_src
 
-*** Parallel algorithm
+- M step :: Use $\Pr(Z|X)$ to estimate $\mu$ and $\pi$ in the natural
+  way. I.e. the cluster intensities are estimated by
+#+begin_src latex
+\[
+\pi_{k} \leftarrow \frac{1}{n}\sum_{i}\Pr(Z_{i}=k),
+\]
+and the allele frequencies are estimated by
+\[
+P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
+\]
+#+end_src
+***** VB
+- E step ::
+#+begin_src latex
+for each $(i,k)$ compute 
+\[
+\tilde \Pr(Z_{i} = k| X_{i}) = \exp\{\E_{q(P,\pi)} ~ \log \Pr(Z_{i}|X_{i},P,\pi)\}.
+\]
+#+end_src
+    I.e. compute the same quantity as in the EM algorithm, but
+    log-averaged over the (current) posterior densities of P and
+    \pi, rather than using (current) point estimates.
+
+- M step :: Use $\tilde \Pr(Z|X)$ to update the posterior densities of
+P and $\pi$. This turns out to be a standard dirichlet-multinomial
+update in which the hyperparameters of the posterior are the sum of
+`prior counts' and `expected counts', with the latter formed using the
+distribution $\tilde \Pr(Z|X)$.
 *** Fitting the no-admixture model via variational Bayes
 #+begin_src latex 
   \begin{itemize}
@@ -527,7 +529,7 @@ unchanged, as this doesn't involve $\mu$. I think the update of
 $q(\mu)$ in the correlated frequencies model differs only in that the
 'prior counts' of the number of copies of allele $j$ observed in
 population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
-
+*** Parallel algorithm
 * Results
   :PROPERTIES:
   :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
@@ -748,6 +750,7 @@ averaging across all loci.
 #+begin_src emacs-lisp :exports results
 (setq org-src-preserve-indentation t
       org-latex-to-pdf-process '("make pdf")
+      ;; org-babel-default-header-args:latex '((:file . "/tmp/z.png"))
       org-export-latex-classes
       '(("article"
          "\\documentclass{article}
@@ -761,7 +764,8 @@ averaging across all loci.
 #+end_src
 
 #+results:
-: t
+| (:file . /tmp/z.png) |
+	: t
 *** Makefile
 #+begin_src makefile :tangle Makefile :noweb no
 BASE = emvbpl
@@ -781,15 +785,17 @@ $(BIB): $(AUX)
 	bibtex $(BASE)
 
 pdf: 	$(BIB)
+	make clean
 	$(LATEX) $(BASE) > /dev/null
 	bibtex $(BASE)
+	$(LATEX) $(BASE) > /dev/null
 	$(LATEX) $(BASE) > /dev/null
 
 clean:
 	rm -f $(AUX) $(BBL) $(JUNK)
 #+end_src
 
-
+*** LaTeX headers
 #+latex_header: \usepackage[sectionbib]{natbib}
 #+latex_header: \bibpunct{(}{)}{,}{a}{}{,}
 #+latex_header: \usepackage{amsmath}
