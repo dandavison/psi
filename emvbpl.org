@@ -162,6 +162,26 @@ for each individual i:
         X_ila \sim P_{l Z_{ila}}
 #+end_src
 
+#+begin_latex
+\begin{algorithmic}
+\FORALL{individuals $i$}
+    \STATE $Q_i \sim Dirichlet(\pi)$
+    \FORALL{locus $l$}
+        \FORALL{group $k$}
+            \STATE $P_{lk} \sim Dirichlet(\alpha^{(0)})$
+        \ENDFOR
+        \FORALL{individual $i$}
+            \FORALL{chromosome $a$}
+                \STATE $Z_{ila} \sim Q_i$
+                \STATE $X_{ila} \sim P_{l Z_{ila}}$
+            \ENDFOR
+        \ENDFOR
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+#+end_latex
+
+
 ** The F model
 The F model of \citet{Nicholson,Falush_et_al_2003} models shared
 ancestry of populations by introducing an ancestral population into
@@ -376,6 +396,26 @@ algorithm (appendix \ref{sec:appendix-nam-M-pi}):
   \end{itemize}
 \end{itemize}
 #+end_latex
+
+#+begin_latex
+\begin{algorithmic}
+\FORALL{groups $k$}
+    \STATE $n_{k} \gets \sum_{i}\gamma^{i}_{k}$
+    \STATE $\lambda^{1}_{k} \gets \lambda^{0}_{k} + n_{k}$
+\ENDFOR
+\end{algorithmic}
+#+end_latex
+
+#+begin_latex
+\begin{program}
+\FOR k := 1 \TO K \DO
+    n_{k} \gets \sum_{i}\gamma^{i}_{k}
+    \lambda^{1}_{k} \gets \lambda^{0}_{k} + n_{k}
+\OD
+\end{program}
+#+end_latex
+
+
 
 **** Updating the approximate posterior on allele frequencies
 The hyperparameters of $q(\mu)$ are updated according to the following
@@ -1049,6 +1089,8 @@ rm -f $(AUX) $(BBL) $(JUNK)
 #+latex_header: \bibpunct{(}{)}{,}{a}{}{,}
 #+latex_header: \usepackage{amsmath}
 #+latex_header: \usepackage{amssymb}
+#+latex_header: \usepackage{algorithmic}
+#+latex_header: \usepackage{program}
 #+latex_header: \usepackage{mathrsfs}
 #+latex_header: \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
 #+latex_header: \newcommand{\E}{\text{E}{}}
