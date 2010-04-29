@@ -406,17 +406,6 @@ algorithm (appendix \ref{sec:appendix-nam-M-pi}):
 \end{algorithmic}
 #+end_latex
 
-#+begin_latex
-\begin{program}
-\FOR k := 1 \TO K \DO
-    n_{k} \gets \sum_{i}\gamma^{i}_{k}
-    \lambda^{1}_{k} \gets \lambda^{0}_{k} + n_{k}
-\OD
-\end{program}
-#+end_latex
-
-
-
 **** Updating the approximate posterior on allele frequencies
 The hyperparameters of $q(\mu)$ are updated according to the following
 algorithm (see appendix \ref{sec:appendix-nam-M-P}):
@@ -1090,7 +1079,6 @@ rm -f $(AUX) $(BBL) $(JUNK)
 #+latex_header: \usepackage{amsmath}
 #+latex_header: \usepackage{amssymb}
 #+latex_header: \usepackage{algorithmic}
-#+latex_header: \usepackage{program}
 #+latex_header: \usepackage{mathrsfs}
 #+latex_header: \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
 #+latex_header: \newcommand{\E}{\text{E}{}}
