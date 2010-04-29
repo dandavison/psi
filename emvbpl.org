@@ -181,7 +181,6 @@ for each individual i:
 \end{algorithmic}
 #+end_latex
 
-
 ** The F model
 The F model of \citet{Nicholson,Falush_et_al_2003} models shared
 ancestry of populations by introducing an ancestral population into
@@ -208,7 +207,7 @@ membership indicators \Z, as well as the real-valued parameters \P and
 \Q.)
 
 \[
-\Pr(X) = \frac{\Pr(\phi,X)}{\Pr(\phi|X)}  = \frac{p(\phi,X)}{q^*(\phi)},
+\Pr(X|K) = \frac{\Pr(\phi,X|K)}{\Pr(\phi|X,K)}  = \frac{p(\phi,X)}{q^*(\phi)},
 \]
 
 where $q^*(\phi)$ denotes the (unknown) true posterior density of
@@ -218,20 +217,25 @@ density, and in practice it will be chosen to have a convenient
 parametric form) gives
 
 #+begin_src latex
-\begin{align*}
-\log \Pr(X)
-&=~ \int \log p(\phi,X) q(\phi) d\phi - \int \log q^*(\phi) q(\phi) d\phi \\
-&=~ \int \log \frac{p(\phi,X)}{q(\phi)} q(\phi) d\phi - \int \log \frac{q^*(\phi)}{q(\phi)} q(\phi) d\phi \\
-&= F(q,p) + d_{KL}(q ~||~ q^*).
-\end{align*}
+  \begin{align*}
+    \log \Pr(X|K)
+    &=~ \int \log p(\phi,X) q(\phi) d\phi - \int \log q^*(\phi) q(\phi) d\phi \\
+    &=~ \int \log \frac{p(\phi,X)}{q(\phi)} q(\phi) d\phi - \int \log \frac{q^*(\phi)}{q(\phi)} q(\phi) d\phi \\
+    &= F(q,p) + d_{KL}(q ~||~ q^*).
+  \end{align*}
 #+end_src
 The second term is the Kullback-Leibler divergence between $q(\phi)$
 and the unknown true posterior $q^*(\phi)$. The first term $F(q, p)$
 is a function(al) of the approximate posterior $q$ and the complete
-data likelihood $\Pr(\phi,X)$, which we can evaluate. Since $\Pr(X)$
+data likelihood $\Pr(\phi,X)$, which we can evaluate. Since $\Pr(X|K)$
 is a constant, maximizing $F(q,p)$ corresponds to minimizing (a
 sensible measure of) the distance between the approximate posterior
-and the true posterior, which is the goal.
+and the true posterior, which is the goal. The maximum value of
+$F(q,p)$ is an approximation of $\log \Pr(X|K)$ and therefore the
+posterior distribution of \K can be investigated by fitting the model
+at several different values of \K. The next section describes
+hill-climbing algorithms at each iteration of which an increase in the
+value of $F(q,p)$ is guaranteed.
 
 =FIXME: In the next section we switch back to separating the
 integer-valued Z from the real-valued \phi=
@@ -577,7 +581,7 @@ population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
 :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
 :END:
 #+latex: \label{sec:results}
-
+** Variational Bayes performs reasonably well at estimating K
 #+ATTR_LaTeX: width=15cm
 [[file:images/vbnam-simulation-results-n80-L1000-Fpoint6-10runs.png]]
 * Discussion
