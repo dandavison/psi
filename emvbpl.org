@@ -608,8 +608,6 @@ averaging across all loci.
 \appendix{}
 ** Updates in variational Bayes algorithm
 
-** E step
-
 *** No-admixture model
 **** E step
 \label{E-step-appendix-no-admixture}
@@ -653,48 +651,6 @@ The expectation that we are trying to evaluate is then
 &=& \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) + \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] - 2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{eqnarray*}
 
-*** \subsubsection{Admixture model}
-**** E step
-\label{E-step-appendix-admixture}
-We need to evaluate
-
-$\gamma^{ila}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\theta)\right\}$.
-
-The complete-data log likelihood is
-
-\begin{equation*}
-\log p(z_{ila}=k,x_{ila}|\theta) = \log \pi_{ik} + \log \mu_{klx_{ila}},
-\end{equation*}
-
-so we need to evaluate integrals of the form
-
-$\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
-
-Since the distributions $q(\pi_{i\cdot})$ and $q(\mu_{kl\cdot})$ are
-both Dirichlet, these have the same form. The first is
-
-\begin{eqnarray*}
-\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} 
-&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{ik'}\Big)}\prod_{k'}\pi_{ik'}^{\lambda^{1}_{ik}-1}\right] \log \pi_{ik} d\pi_{i\cdot} \\
-&=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big),
-\end{eqnarray*}
-where $\digamma$ is the digamma function, and the second one is
-\begin{equation*}
-\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot} = \digamma\Big(\alpha^{1}_{klj}\Big) - \digamma\Big(\sum_{j'}\alpha^{1}_{klj'}\Big).
-\end{equation*}
-
-\paragraph{}
-The expectation that we are trying to evaluate is then
-
-\begin{eqnarray*}
-\log \gamma_{ilk} 
-&=& \E_{q(\theta)}\log p(z_{il}=k,x_{il}|\theta) \\
-&=& \int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} + \int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
-&=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) + \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) - \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
-\end{eqnarray*}
-
-** \subsection{M step}
-*** No-admixture model
 **** M step
 ***** Updating the hyperparameters of $q(\pi)$
 \label{q(pi)-update-no-admixture}
@@ -729,52 +685,6 @@ counts:
 \lambda^{1}_{k} \leftarrow \lambda^{0}_{k} + n_{k}.
 \end{equation*}
 
-*** Admixture model
-**** M step
-***** Updating the hyperparameters of $q(\pi)$
-\label{q(pi)-update-admixture}
-
-We want to set $q(\pi)$ proportional to
-
-$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
-
-This factorises across individuals as
-
-\begin{equation*}
-p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} = \prod_{i} p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)\right\},
-\end{equation*}
-
-so we can update the hyperparameters of $p(\pi_{i\cdot})$
-independently for each individual $i$. The expectation is
-
-\begin{eqnarray*}
-\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)  &=& \E_{q(z\cdot\cdot)} \sum_{l} \sum_{a=1}^{2} \log \pi_{iz_{ila}} \\
-&=& \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \log \pi_{ik} \\
-&=& \sum_{k} \left[\log \pi_{ik}\right] \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k} \\
-&=& \sum_{k} \log \pi_{ik}^{m_{ik}} \\
-\end{eqnarray*}
-
-where $m_{ik} = \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k}$ is the
-current approximate posterior expected number of allele copies at all
-loci in individual $i$ that derive from population $k$. Therefore
-
-\begin{eqnarray*}
-p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi_{i\cdot})\right\}
-&\propto& \prod_{k}\pi_{ik}^{\lambda^{0}_{ik} - 1 + m_{ik} },
-\end{eqnarray*}
-
-and the update is achieved by setting the hyperparameters equal to the
-sum of the prior counts and the current approximate posterior expected
-counts:
-
-\begin{equation*}
-\lambda^{1}_{ik} \leftarrow \lambda^{0}_{ik} + m_{ik}.
-\end{equation*}
-
-=FIXME: equal to a distribution proportional to=
-
-*** No-admixture model
-**** M step
 ***** Updating the hyperparameters of $q(\mu)$
 \label{q(mu)-update-no-admixture}
 
@@ -818,7 +728,88 @@ counts:
 \end{equation*}
 
 *** Admixture model
+**** E step
+\label{E-step-appendix-admixture}
+We need to evaluate
+
+$\gamma^{ila}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\theta)\right\}$.
+
+The complete-data log likelihood is
+
+\begin{equation*}
+\log p(z_{ila}=k,x_{ila}|\theta) = \log \pi_{ik} + \log \mu_{klx_{ila}},
+\end{equation*}
+
+so we need to evaluate integrals of the form
+
+$\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
+
+Since the distributions $q(\pi_{i\cdot})$ and $q(\mu_{kl\cdot})$ are
+both Dirichlet, these have the same form. The first is
+
+\begin{eqnarray*}
+\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} 
+&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{ik'}\Big)}\prod_{k'}\pi_{ik'}^{\lambda^{1}_{ik}-1}\right] \log \pi_{ik} d\pi_{i\cdot} \\
+&=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big),
+\end{eqnarray*}
+where $\digamma$ is the digamma function, and the second one is
+\begin{equation*}
+\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot} = \digamma\Big(\alpha^{1}_{klj}\Big) - \digamma\Big(\sum_{j'}\alpha^{1}_{klj'}\Big).
+\end{equation*}
+
+\paragraph{}
+The expectation that we are trying to evaluate is then
+
+\begin{eqnarray*}
+\log \gamma_{ilk} 
+&=& \E_{q(\theta)}\log p(z_{il}=k,x_{il}|\theta) \\
+&=& \int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} + \int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
+&=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) + \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) - \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
+\end{eqnarray*}
+
 **** M step
+***** Updating the hyperparameters of $q(\pi)$
+\label{q(pi)-update-admixture}
+
+We want to set $q(\pi)$ proportional to
+
+$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
+
+This factorises across individuals as
+
+\begin{equation*}
+p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} = \prod_{i} p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)\right\},
+\end{equation*}
+
+so we can update the hyperparameters of $p(\pi_{i\cdot})$
+independently for each individual $i$. The expectation is
+
+\begin{eqnarray*}
+\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)  &=& \E_{q(z\cdot\cdot)} \sum_{l} \sum_{a=1}^{2} \log \pi_{iz_{ila}} \\
+&=& \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \log \pi_{ik} \\
+&=& \sum_{k} \left[\log \pi_{ik}\right] \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k} \\
+&=& \sum_{k} \log \pi_{ik}^{m_{ik}} \\
+\end{eqnarray*}
+
+where $m_{ik} = \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k}$ is the
+current approximate posterior expected number of allele copies at all
+loci in individual $i$ that derive from population $k$. Therefore
+
+\begin{eqnarray*}
+p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi_{i\cdot})\right\}
+&\propto& \prod_{k}\pi_{ik}^{\lambda^{0}_{ik} - 1 + m_{ik} },
+\end{eqnarray*}
+
+and the update is achieved by setting the hyperparameters equal to the
+sum of the prior counts and the current approximate posterior expected
+counts:
+
+\begin{equation*}
+\lambda^{1}_{ik} \leftarrow \lambda^{0}_{ik} + m_{ik}.
+\end{equation*}
+
+=FIXME: equal to a distribution proportional to=
+
 ***** Updating the hyperparameters of $q(\mu)$
 \label{q(mu)-update-admixture}
 
@@ -854,7 +845,7 @@ achieved by setting
 \alpha^{1}_{lkj} \leftarrow \alpha^{0}_{lkj} + m_{lkj}.
 \end{equation*}
 
-** \section{EM algorithm update for $\mu$ in correlated frequencies model}
+** EM algorithm update for $\mu$ in correlated frequencies model
 
 \paragraph{}
 The complete-data posterior density (assuming a flat prior on $q$) is
