@@ -228,14 +228,16 @@ The second term is the Kullback-Leibler divergence between $q(\phi)$
 and the unknown true posterior $q^*(\phi)$. The first term $F(q, p)$
 is a function(al) of the approximate posterior $q$ and the complete
 data likelihood $\Pr(\phi,X)$, which we can evaluate. Since $\Pr(X|K)$
-is a constant, maximizing $F(q,p)$ corresponds to minimizing (a
-sensible measure of) the distance between the approximate posterior
-and the true posterior, which is the goal. The maximum value of
-$F(q,p)$ is an approximation of $\log \Pr(X|K)$ and therefore the
-posterior distribution of \K can be investigated by fitting the model
-at several different values of \K. The next section describes
-hill-climbing algorithms at each iteration of which an increase in the
-value of $F(q,p)$ is guaranteed.
+is a constant, maximizing $F(q,p)$ corresponds to minimizing a
+reasonable measure of the distance between the approximate posterior
+and the true posterior. The next section describes hill-climbing
+algorithms at each iteration of which an increase in the value of
+$F(q,p)$ is guaranteed. When these algorithms reach convergence, the
+final value of $q$ can be used as an approximation of the true
+posterior density. Furthermore, since the maximum value of $F(q,p)$
+approximates $\log \Pr(X|K)$, the posterior distribution of the number
+\K of mixture components can be investigated by fitting the model at
+several different values of \K.
 
 =FIXME: In the next section we switch back to separating the
 integer-valued Z from the real-valued \phi=
