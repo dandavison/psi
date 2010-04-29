@@ -94,7 +94,7 @@ paper.
 :END:
 #+latex: \label{sec:models}
 
-** Basic mixture model: the No Admixture model
+** No Admixture model
 In the basic mixture modelling problem, n items {X_i,\ldots,X_n} are
 observed and each is assumed to belong to one of K groups. Each item
 X_i has an unknown label Z_i \in {1,\ldots,K} indicating the group to
@@ -181,7 +181,7 @@ for each individual i:
 \end{algorithmic}
 #+end_latex
 
-** The F model
+** F model
 The F model of \citet{Nicholson,Falush_et_al_2003} models shared
 ancestry of populations by introducing an ancestral population into
 the model. The populations in the mixture are characterised by allele
@@ -582,9 +582,11 @@ population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
 :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
 :END:
 #+latex: \label{sec:results}
-** Variational Bayes performs reasonably well at estimating K
+** Known K
+** Inferring K
 #+ATTR_LaTeX: width=15cm
 [[file:images/vbnam-simulation-results-n80-L1000-Fpoint6-10runs.png]]
+** Parallel processing
 * Discussion
 :PROPERTIES:
 :ID:       280c42eb-52a3-46ff-9812-61a38e0b82ae
