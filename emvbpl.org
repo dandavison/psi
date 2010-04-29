@@ -1024,6 +1024,9 @@ Inference of population structure from large genotype data sets: variational Bay
   (setq org-export-latex-classes
         '(("article"
            "\\documentclass{article}
+(setq org-export-latex-default-packages-alist
+      (remove-if (lambda (el) (and (listp el) (equal (second el) "hyperref")))
+		 org-export-latex-default-packages-alist))
   [EXTRA]
   [PACKAGES]"
   ("\\section{%s}" . "\\section*{%s}")
