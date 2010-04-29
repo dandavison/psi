@@ -1018,26 +1018,27 @@ Inference of population structure from large genotype data sets: variational Bay
 ** Org config
 #+startup: oddeven content
 #+begin_src emacs-lisp :exports results
-  (setq org-src-preserve-indentation t)
-  (setq org-latex-to-pdf-process '("make pdf"))
-  
-  (setq org-export-latex-classes
-        '(("article"
-           "\\documentclass{article}
+(setq org-src-preserve-indentation t)
+(setq org-latex-to-pdf-process '("make pdf"))
+
 (setq org-export-latex-default-packages-alist
       (remove-if (lambda (el) (and (listp el) (equal (second el) "hyperref")))
 		 org-export-latex-default-packages-alist))
+
+      (setq org-export-latex-classes
+	    '(("article"
+	       "\\documentclass{article}
   [EXTRA]
   [PACKAGES]"
-  ("\\section{%s}" . "\\section*{%s}")
-  ("\\subsection{%s}" . "\\subsection*{%s}")
-  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-  ("\\paragraph{%s}" . "\\paragraph*{%s}")
-  ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
-  
-  (setq org-entities-user
-        (mapcar (lambda (ent) (list ent ent t))
-                '("i" "j" "k" "K" "l" "n" "p" "P" "q" "Q" "X" "Z")))
+	       ("\\section{%s}" . "\\section*{%s}")
+	       ("\\subsection{%s}" . "\\subsection*{%s}")
+	       ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+	       ("\\paragraph{%s}" . "\\paragraph*{%s}")
+	       ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+      
+      (setq org-entities-user
+	    (mapcar (lambda (ent) (list ent ent t))
+		    '("i" "j" "k" "K" "l" "n" "p" "P" "q" "Q" "X" "Z")))
 #+end_src
 
 #+results:
