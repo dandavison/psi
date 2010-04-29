@@ -61,35 +61,35 @@ paper.
 
 #+caption: Notation used
 #+label: tbl:notation
-| Notation           | Meaning                                                                                           |
-|--------------------+---------------------------------------------------------------------------------------------------|
-| n                  | Number of individuals                                                                             |
-| L                  | Number of marker loci                                                                             |
-| J_l                | Number of alleles at locus l                                                                      |
-| K                  | Number of groups in mixture model                                                                 |
-| i                  | Indexes individuals: i \in {1,\ldots,n}                                                           |
-| l                  | Indexes loci: l \in {1,\ldots,L}                                                                  |
-| j                  | Indexes alleles: j \in {1,\ldots,J_l}                                                             |
-| a                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                            |
-| X_ila              | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}           |
-| \phi_k             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                             |
-| P_lk               | Allele frequencies at locus l in group k                                                          |
-| \alpha_j^{(0)}     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                       |
-| \alpha_lkj^{(1)}   | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                 |
-|$~$                 |                                                                                                   |
-|                    |                                                                                                   |
-| No Admixture Model |                                                                                                   |
-|--------------------+---------------------------------------------------------------------------------------------------|
-| Z_i                | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                        |
-| \pi_k              | Intensity of group k in the mixture                                                               |
-|$~$                 |                                                                                                   |
-|                    |                                                                                                   |
-| Admixture Model    |                                                                                                   |
-|--------------------+---------------------------------------------------------------------------------------------------|
-| Z_ila              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K} |
-| Q_ik               | Unknown genome-wide proportion of ancestry of individual i from group k                           |
-| \lambda_k^{(0)}    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                       |
-| \lambda_{ik}^{(1)} | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                    |
+| Notation             | Meaning                                                                                           |
+|----------------------+---------------------------------------------------------------------------------------------------|
+| $n$                  | Number of individuals                                                                             |
+| $L$                  | Number of marker loci                                                                             |
+| $J_l$                | Number of alleles at locus l                                                                      |
+| $K$                  | Number of groups in mixture model                                                                 |
+| $i$                  | Indexes individuals: i \in {1,\ldots,n}                                                           |
+| $l$                  | Indexes loci: l \in {1,\ldots,L}                                                                  |
+| $j$                  | Indexes alleles: j \in {1,\ldots,J_l}                                                             |
+| $a$                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                            |
+| $X_{ila}$            | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}           |
+| $\phi_k$             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                             |
+| $P_{lk}$             | Allele frequencies at locus l in group k                                                          |
+| $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                       |
+| $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                 |
+| $~$                  |                                                                                                   |
+|                      |                                                                                                   |
+| No Admixture Model   |                                                                                                   |
+|----------------------+---------------------------------------------------------------------------------------------------|
+| Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                        |
+| $\pi_k$              | Intensity of group k in the mixture                                                               |
+| $~$                  |                                                                                                   |
+|                      |                                                                                                   |
+| Admixture Model      |                                                                                                   |
+|----------------------+---------------------------------------------------------------------------------------------------|
+| Z_{ila}              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K} |
+| $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                           |
+| $\lambda_k^{(0)}$    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                       |
+| $\lambda_{ik}^{(1)}$ | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                    |
 
 * Models
 :PROPERTIES:
@@ -121,14 +121,14 @@ groups. The following algorithm simulates a data set from this model.
 
 #+begin_src python
 for each individual i:
-Z_i \sim \pi
+    Z_i \sim \pi
 
 for each locus l:
-for each group k:
-P_lk \sim Dirichlet(\alpha)
-for each individual i:
-for each chromosome a:
-X_ila \sim P_lk
+    for each group k:
+        P_lk \sim Dirichlet(\alpha)
+    for each individual i:
+        for each chromosome a:
+            X_ila \sim P_lk
 #+end_src
 
 See PSD for further details.
@@ -154,15 +154,15 @@ algorithm simulates a data set from the Admixture Model model.
 
 #+begin_src python
 for each individual i:
-Q_i \sim Dirichlet(\pi)
+    Q_i \sim Dirichlet(\pi)
 
 for each locus l:
-for each group k:
-P_lk \sim Dirichlet(\alpha^{(0)})
+    for each group k:
+        P_lk \sim Dirichlet(\alpha^{(0)})
 for each individual i:
-for each chromosome a:
-Z_ila \sim Q_i
-X_ila \sim P_{l Z_{ila}}
+    for each chromosome a:
+        Z_ila \sim Q_i
+        X_ila \sim P_{l Z_{ila}}
 #+end_src
 
 ** The F model
@@ -176,61 +176,29 @@ comparison with algorithm \ref{alg:am-sim} above.
 
 =FIXME: move this to later?=
 
-* Fitting the models via Variational Bayes
-:PROPERTIES:
-:ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
-:END:
-#+latex: \label{sec:model-fitting}
-\citet{Pritchard_et_al_2000} and \citet{Falush_et_al_2003} described
-how to fit the above models using MCMC. In this section I describe
-how to fit these models using Variational Bayes (VB). The basic idea
-of VB is to assume a specific parametric form for the posterior
-density, and then to optimize the values of the hyperparameters via
-a hill-climbing algorithm. Thus, in principle, VB makes Bayesian
-posterior densities available without imposing the computational
-burden of exploring the support of the posterior via a Markov-chain
-sampler. Whether or not this results in a more attractive procedure
-than MCMC is discussed in section \ref{sec:discussion}.
+* Introduction to Variational Bayes
+The basic idea of VB is to assume a specific parametric form for the
+posterior density, and then to optimize the values of the
+hyperparameters via a hill-climbing algorithm. Thus, in principle, VB
+makes Bayesian posterior densities available without imposing the
+computational burden of exploring the support of the posterior via a
+Markov-chain sampler. Whether or not this results in a more attractive
+procedure than MCMC is discussed in section \ref{sec:discussion}.
 
-The VB algorithm bears a strong similarity to an
-Expectation-Maximization (EM) algorithm, and a simple heuristic
-description is that both methods work by iterating the following
-steps:
-
-1. E step :: Compute the discrete probability distribution \Pr(Z|X)
-             on the unknown cluster indicators, using the current parameter
-             estimates.
-2. M step :: Use the current distribution \Pr(Z|X) to update the
-               parameter estimates.
-
-               In EM, the E step is accomplished straightforwardly using Bayes
-               rule and current point estimates of the parameters P and Q. In
-               contrast, in VB the term "parameters" in the above refers to
-               hyperparameters \alpha^{(1)} and \lambda^{(1)} of the posterior
-               density, and the E step is accomplished by averaging over the
-               current posterior densities for \P and \Q.
-
-** Variational Bayes overview
-=FIXME: Pr() versus q(), function notation, incliude Z in this section?=
-
-Derivation of VB updates are given by \citet{somepeople}. Since VB
-has not been widely applied in the genetics literature, in this
-section I give an informal summary of the derivation of the
-updating procedure used in the E and M step.
-
-For observed data \X and unobserved parameters \phi we can write
+For observed data \X and unobserved parameters \phi we can write (for
+the purposes of this section, \phi includes the integer-valued
+membership indicators \Z, as well as the real-valued parameters \P and
+\Q.)
 
 \[
 \Pr(X) = \frac{\Pr(\phi,X)}{\Pr(\phi|X)}  = \frac{p(\phi,X)}{q^*(\phi)},
 \]
 
 where $q^*(\phi)$ denotes the (unknown) true posterior density of
-parameters \phi. (For the purposes of this section, \phi includes
-the integer-valued membership indicators \Z, as well as the
-real-valued parameters \P and \Q.) Now take logs and integrate
-with respect to some distribution $q(\phi)$ (this will be the
-approximate posterior density, and in practice it will be chosen
-to have a convenient parametric form).
+parameters \phi. Taking logs and integrating with respect to some
+distribution $q(\phi)$ (this will be the approximate posterior
+density, and in practice it will be chosen to have a convenient
+parametric form) gives
 
 #+begin_src latex
 \begin{align*}
@@ -246,59 +214,65 @@ is a function(al) of the approximate posterior $q$ and the complete
 data likelihood $\Pr(\phi,X)$, which we can evaluate. Since $\Pr(X)$
 is a constant, maximizing $F(q,p)$ corresponds to minimizing (a
 sensible measure of) the distance between the approximate posterior
-and the true posterior, which is the goal. \citet{Somepeople} show
-that this achieved by the following update scheme:
+and the true posterior, which is the goal.
+
+=FIXME: In the next section we switch back to separating the
+integer-valued Z from the real-valued \phi=
+
+* Fitting the models via Variational Bayes
+:PROPERTIES:
+:ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
+:END:
+#+latex: \label{sec:model-fitting}
+\citet{Pritchard_et_al_2000} and \citet{Falush_et_al_2003} described
+how to fit the above models using MCMC. In this section I describe
+how to fit these models using Variational Bayes (VB).
+
+The VB algorithms bear a strong similarity to Expectation-Maximization
+(EM) algorithms, and a simple heuristic description is that both
+methods work by iterating the following steps:
+
+1. E step :: Compute the discrete probability distribution \Pr(Z|X)
+             on the unknown cluster indicators, using the current parameter
+             estimates.
+2. M step :: Use the current distribution \Pr(Z|X) to update the
+             parameter estimates.
+
+In EM, the E step is accomplished straightforwardly using Bayes rule
+and current point estimates of the parameters P and Q. In contrast, in
+VB the term "parameters" in the above refers to hyperparameters
+\alpha^{(1)} and \lambda^{(1)} of the posterior density, and the E
+step is accomplished by averaging over the current posterior densities
+for \P and \Q. \citet{Somepeople} show that this is achieved by the
+following update scheme:
 
 1. E Step ::
-   Set $q(Z) \propto \exp\left\{\E_{q(\phi)} \log p(Z,X|\theta)\right\}$
-  2. M Step ::
-     Set $q(\phi) \propto \Pr(\phi) \exp\left\{\E_{q(Z)} \log p(Z,X|\theta)\right\}$
+   Set $q(Z) \propto \exp\left\{\E_{q(\phi)} \log p(Z,X|\phi)\right\}$
+2. M Step ::
+   Set $q(\phi) \propto \Pr(\phi) \exp\left\{\E_{q(Z)} \log p(Z,X|\phi)\right\}$
 
-     =FIXME: Show how maximization of F is achieved by updates=
+In the following sections I focus on the E step, the M step and
+assessing convergence. In all cases the full algorithm is of the
+following form:
 
-** No admixture
-In this case the parameters are P (allele frequencies) and
-$\pi$ (cluster intensities).
+1. Set parameters (EM) / hyperparameters (VB) to their initial values.
+2. E step
+3. M step
+4. Stop if converged, otherwise go to (2).
+ 
+** No Admixture model
+We specify that the approximate posterior density $q(Z,\pi,P)$ can be
+factorised as $q(Z)q(\pi)q(\mu)$ and that each of these three
+components has the same parametric form as the prior, differing only
+in the hyperparameters. In other words, we assume that q(\pi) is
+Dirichlet(\lambda^{1}_{1},\ldots,\lambda^{1}_{K}), and that
+$q(P_{lk\cdot}) is
+Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
+independently for all \l, \k.
 
-*** EM
-- E step :: For each $(i,k)$ compute
-#+begin_src latex
-            \begin{align*}
-            \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
-            &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
-            \end{align*}
-#+end_src
+=FIXME: what are we saying about q(Z)=
+=FIXME: how is the notation going to differentiate among these different q distributions?=
 
-            - M step :: Use $\Pr(Z|X)$ to estimate $\mu$ and $\pi$ in the natural
-                        way. I.e. the cluster intensities are estimated by
-#+begin_src latex
-                        \[
-                        \pi_{k} \leftarrow \frac{1}{n}\sum_{i}\Pr(Z_{i}=k),
-                        \]
-                        and the allele frequencies are estimated by
-                        \[
-                        P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
-                        \]
-#+end_src
-*** VB
-- E step ::
-#+begin_src latex
-  for each $(i,k)$ compute 
-  \[
-  \tilde \Pr(Z_{i} = k| X_{i}) = \exp\{\E_{q(P,\pi)} ~ \log \Pr(Z_{i}|X_{i},P,\pi)\}.
-  \]
-#+end_src
-  I.e. compute the same quantity as in the EM algorithm, but
-  log-averaged over the (current) posterior densities of P and
-  \pi, rather than using (current) point estimates.
-
-  - M step :: Use $\tilde \Pr(Z|X)$ to update the posterior densities of
-              P and $\pi$. This turns out to be a standard dirichlet-multinomial
-              update in which the hyperparameters of the posterior are the sum of
-              `prior counts' and `expected counts', with the latter formed using the
-              distribution $\tilde \Pr(Z|X)$.
-** Fitting the no-admixture model via variational Bayes
-#+begin_src latex 
 \begin{itemize}
 \item Assume that approximate posterior density $q(z,\pi,\mu)$ can be factorised as $q(z)q(\pi)q(\mu)$
 \item Assume that the posteriors have the same parametric form as the priors:
@@ -310,26 +284,27 @@ $\pi$ (cluster intensities).
 \item Let $\gamma^{i}_{k} = q(z_{i}=k)$
 \end{itemize}
 
-\subsection{E step}
 
-Using the current distribution $q(\theta)$, set $q(z) \propto \exp\left\{\E_{q(\theta)} \log p(z,x|\theta)\right\}$. Since $p(z,x|\theta) = \prod_{i} p(z_{i},x_{i}|\theta)$ this is done independently for each $i$, and the E step comprises the following algorithm:
-\begin{itemize}
-\item For each $i$
-\begin{itemize}
-\item For each $k$
-\begin{itemize}
-\item compute $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
-\end{itemize}
-\item renormalise the $\gamma_{i\cdot}$
-\end{itemize}
-\end{itemize}
-I find (appendix \ref{E-step-appendix-no-admixture}) that
+*** E Step
+Using the current distribution $q(\theta)$, set $q(z) \propto
+\exp\left\{\E_{q(\theta)} \log p(z,x|\theta)\right\}$. Since
+$p(z,x|\theta) = \prod_{i} p(z_{i},x_{i}|\theta)$ this is done
+independently for each $i$, and the E step comprises the following
+algorithm:
+
+1. For each \i
+   1. For each \k
+      - Compute $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
+   2. For each \k
+      - $\gamma^{i}_{k} \leftarrow $\gamma^{i}_{k} / \sum_{k'} $\gamma^{i}_{k'}
+
+It is shown in appendix \ref{E-step-appendix-no-admixture} that
 \begin{equation*}
 \log \gamma^{i}_{k} = \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) + \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] - 2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{equation*}
 where $\digamma$ is the digamma function.
 
-\subsection{M step}
+*** M step
 Using the current distribution $p(z)$, the M step comprises setting
 \begin{eqnarray*}
 q(\theta) &\propto& p(\theta)\exp\left\{\E_{q(z)} \log p(z,x|\theta)\right\} \\
@@ -429,6 +404,47 @@ H\(q(z)\)
 &=~ -\sum_{i} \sum_{k} \gamma^{i}_{k} \log \gamma^{i}_{k}\\
 \end{align*}
 #+end_src
+** No admixture
+In this case the parameters are P (allele frequencies) and
+$\pi$ (cluster intensities).
+
+*** EM
+- E step :: For each $(i,k)$ compute
+#+begin_src latex
+            \begin{align*}
+            \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
+            &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
+            \end{align*}
+#+end_src
+
+- M step :: Use $\Pr(Z|X)$ to estimate $\mu$ and $\pi$ in the natural
+            way. I.e. the cluster intensities are estimated by
+#+begin_src latex
+\[
+\pi_{k} \leftarrow \frac{1}{n}\sum_{i}\Pr(Z_{i}=k),
+\]
+and the allele frequencies are estimated by
+\[
+P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
+\]
+#+end_src
+*** VB
+- E step ::
+#+begin_src latex
+  for each $(i,k)$ compute 
+  \[
+  \tilde \Pr(Z_{i} = k| X_{i}) = \exp\{\E_{q(P,\pi)} ~ \log \Pr(Z_{i}|X_{i},P,\pi)\}.
+  \]
+#+end_src
+  I.e. compute the same quantity as in the EM algorithm, but
+  log-averaged over the (current) posterior densities of P and
+  \pi, rather than using (current) point estimates.
+
+  - M step :: Use $\tilde \Pr(Z|X)$ to update the posterior densities of
+              P and $\pi$. This turns out to be a standard dirichlet-multinomial
+              update in which the hyperparameters of the posterior are the sum of
+              `prior counts' and `expected counts', with the latter formed using the
+              distribution $\tilde \Pr(Z|X)$.
 
 ** Fitting the admixture model via variational Bayes
 #+begin_src latex
@@ -781,29 +797,39 @@ giving
 
 * Config 							   :noexport:
 ** Org config
+#+startup: oddeven content
 #+begin_src emacs-lisp :exports results
-(setq org-src-preserve-indentation t
-org-latex-to-pdf-process '("make pdf")
-;; org-babel-default-header-args:latex '((:file . "/tmp/z.png"))
-org-export-latex-classes
-'(("article"
-"\\documentclass{article}
-[EXTRA]
-[PACKAGES]"
-("\\section{%s}" . "\\section*{%s}")
-("\\subsection{%s}" . "\\subsection*{%s}")
-("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-("\\paragraph{%s}" . "\\paragraph*{%s}")
-("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
-
-(setq dan/org-latex-math-entities '("p" "q" "X" "Z" "P" "Q"))
-
-(setq org-entities-user
-(mapcar (lambda (ent) (list ent ent t)) dan/org-latex-math-entities))
+  (setq org-src-preserve-indentation t)
+  (setq org-latex-to-pdf-process '("make pdf"))
+  
+  (setq org-export-latex-classes
+        '(("article"
+           "\\documentclass{article}
+  [EXTRA]
+  [PACKAGES]"
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+  ("\\paragraph{%s}" . "\\paragraph*{%s}")
+  ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+  
+  (setq org-entities-user
+        (mapcar (lambda (ent) (list ent ent t))
+                '("i" "j" "k" "K" "l" "n" "p" "P" "q" "Q" "X" "Z")))
 #+end_src
 
 #+results:
-| (:file . /tmp/z.png) |
+| i | i | t |
+| j | j | t |
+| K | K | t |
+| l | l | t |
+| n | n | t |
+| p | p | t |
+| P | P | t |
+| q | q | t |
+| Q | Q | t |
+| X | X | t |
+| Z | Z | t |
 : t
 ** Makefile
 #+begin_src makefile :tangle Makefile :noweb no
