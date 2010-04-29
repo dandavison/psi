@@ -1,9 +1,7 @@
-#+title:Inference of population structure from large genotype data sets
-#+title:Variational Bayes and parallel computing for fitting mixture models to genotype data
-#+title:Inference of population structure from large genotype data sets: variational Bayes and parallel computing
 #+title:Variational Bayes and parallel algorithms for fitting mixture models to large genotype data sets
 #+author:Dan Davison
 #+date:\today
+
 
 * Introduction
 Inference of population structure is often the main motivation for
@@ -889,7 +887,10 @@ giving
 \bibliography{dan}
 * Notes								   :noexport:
 - Focus on SNP data?
-
+** Alternative titles
+Inference of population structure from large genotype data sets
+Variational Bayes and parallel computing for fitting mixture models to genotype data
+Inference of population structure from large genotype data sets: variational Bayes and parallel computing
 * Config 							   :noexport:
 ** Org config
 #+startup: oddeven content
