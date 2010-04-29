@@ -1034,6 +1034,7 @@ Inference of population structure from large genotype data sets: variational Bay
 #+results:
 | i | i | t |
 | j | j | t |
+| k | k | t |
 | K | K | t |
 | l | l | t |
 | n | n | t |
