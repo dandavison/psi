@@ -611,6 +611,7 @@ averaging across all loci.
 ** E step
 
 *** No-admixture model
+**** E step
 \label{E-step-appendix-no-admixture}
 
 We need to evaluate
@@ -653,6 +654,7 @@ The expectation that we are trying to evaluate is then
 \end{eqnarray*}
 
 *** \subsubsection{Admixture model}
+**** E step
 \label{E-step-appendix-admixture}
 We need to evaluate
 
@@ -692,8 +694,9 @@ The expectation that we are trying to evaluate is then
 \end{eqnarray*}
 
 ** \subsection{M step}
-
-*** \subsubsection{No-admixture model: updating the hyperparameters of $q(\pi)$}
+*** No-admixture model
+**** M step
+***** Updating the hyperparameters of $q(\pi)$
 \label{q(pi)-update-no-admixture}
 
 We want to set $q(\pi)$ proportional to
@@ -726,7 +729,9 @@ counts:
 \lambda^{1}_{k} \leftarrow \lambda^{0}_{k} + n_{k}.
 \end{equation*}
 
-*** \subsubsection{Admixture model: updating the hyperparameters of $q(\pi)$}
+*** Admixture model
+**** M step
+***** Updating the hyperparameters of $q(\pi)$
 \label{q(pi)-update-admixture}
 
 We want to set $q(\pi)$ proportional to
@@ -768,7 +773,9 @@ counts:
 
 =FIXME: equal to a distribution proportional to=
 
-*** \subsubsection{No-admixture model: Updating the hyperparameters of $q(\mu)$}
+*** No-admixture model
+**** M step
+***** Updating the hyperparameters of $q(\mu)$
 \label{q(mu)-update-no-admixture}
 
 We want to set $q(\mu)$ proportional to 
@@ -810,8 +817,9 @@ counts:
 \alpha^{1}_{lkj} \leftarrow \alpha^{0}_{lkj} + n_{lkj}.
 \end{equation*}
 
-
-*** \subsubsection{Admixture model: Updating the hyperparameters of $q(\mu)$}
+*** Admixture model
+**** M step
+***** Updating the hyperparameters of $q(\mu)$
 \label{q(mu)-update-admixture}
 
 We want to set $q(\mu)$ proportional to
