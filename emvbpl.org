@@ -284,7 +284,6 @@ independently for all \l, \k.
 \item Let $\gamma^{i}_{k} = q(z_{i}=k)$
 \end{itemize}
 
-
 *** E Step
 Using the current distribution $q(\theta)$, set $q(z) \propto
 \exp\left\{\E_{q(\theta)} \log p(z,x|\theta)\right\}$. Since
@@ -606,22 +605,33 @@ averaging across all loci.
 :ID:       5b050c13-e5a3-4561-8623-54af42c27253
 :END:
 #+latex: \label{sec:appendix}
-#+begin_src latex
 \appendix{}
-\section{Updates in variational Bayes algorithm}
+** Updates in variational Bayes algorithm
 
-\subsection{E step}
+** E step
 
-\subsubsection{No-admixture model}
+*** No-admixture model
 \label{E-step-appendix-no-admixture}
-We need to evaluate $\gamma^{i}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$. The complete-data log likelihood is
+
+We need to evaluate
+
+$\gamma^{i}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$.
+
+The complete-data log likelihood is
+
 \begin{eqnarray*}
 \log p(z_{i}=k,x_{i}|\theta) 
 &=& \log \pi_{k} + \sum_{l}\sum_{a=1}^{2}\log p(x_{ila}|\mu_{kl\cdot}) \\
 &=& \log \pi_{k} + \sum_{l}\sum_{a=1}^{2} \log \mu_{klx_{ila}},
 \end{eqnarray*}
 
-so we need to evaluate integrals of the form $\int q(\pi) \log \pi_{k} d\pi$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$. Since the distributions $q(\pi)$ and $q(\mu_{kl\cdot})$ are both Dirichlet, these have the same form. The first is
+so we need to evaluate integrals of the form
+
+$\int q(\pi) \log \pi_{k} d\pi$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
+
+Since the distributions $q(\pi)$ and $q(\mu_{kl\cdot})$ are both
+Dirichlet, these have the same form. The first is
+
 \begin{eqnarray*}
 \int q(\pi) \log \pi_{k} d\pi 
 &=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{k'}\Big)}\prod_{k}\pi_{k}^{\lambda^{1}_{k}-1}\right] \log \pi_{k} d\pi \\
@@ -642,13 +652,25 @@ The expectation that we are trying to evaluate is then
 &=& \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) + \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] - 2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{eqnarray*}
 
-\subsubsection{Admixture model}
+*** \subsubsection{Admixture model}
 \label{E-step-appendix-admixture}
-We need to evaluate $\gamma^{ila}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\theta)\right\}$. The complete-data log likelihood is
+We need to evaluate
+
+$\gamma^{ila}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\theta)\right\}$.
+
+The complete-data log likelihood is
+
 \begin{equation*}
 \log p(z_{ila}=k,x_{ila}|\theta) = \log \pi_{ik} + \log \mu_{klx_{ila}},
 \end{equation*}
-so we need to evaluate integrals of the form $\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$. Since the distributions $q(\pi_{i\cdot})$ and $q(\mu_{kl\cdot})$ are both Dirichlet, these have the same form. The first is
+
+so we need to evaluate integrals of the form
+
+$\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
+
+Since the distributions $q(\pi_{i\cdot})$ and $q(\mu_{kl\cdot})$ are
+both Dirichlet, these have the same form. The first is
+
 \begin{eqnarray*}
 \int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} 
 &=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{ik'}\Big)}\prod_{k'}\pi_{ik'}^{\lambda^{1}_{ik}-1}\right] \log \pi_{ik} d\pi_{i\cdot} \\
@@ -669,99 +691,167 @@ The expectation that we are trying to evaluate is then
 &=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) + \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) - \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{eqnarray*}
 
-\subsection{M step}
+** \subsection{M step}
 
-\subsubsection{No-admixture model: updating the hyperparameters of $q(\pi)$} \label{q(pi)-update-no-admixture}
-We want to set $q(\pi)$ proportional to $p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$. The expectation is
+*** \subsubsection{No-admixture model: updating the hyperparameters of $q(\pi)$}
+\label{q(pi)-update-no-admixture}
+
+We want to set $q(\pi)$ proportional to
+
+$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
+
+The expectation is
+
 \begin{eqnarray*}
 \E_{q(z)} \log p(z|\pi)  = \E_{q(z)} \sum_{i} \log \pi_{z_{i}}
 &=& \sum_{z_{1},\ldots,z_{n}}\sum_{i} \left[\log \pi_{z_{i}} \right] \gamma_{1z_{1}},\ldots, \gamma_{nz_{n}}\\
 &=& \sum_{i} \sum_{k} \gamma^{i}_{k} \log \pi_{k} \\
 &=& \sum_{k} \log \pi_{k}^{n_{k}}   \\
 \end{eqnarray*}
-where $n_{k} = \sum_{i} \gamma^{i}_{k}$ is the current approximate posterior expected number of individuals assigned to population $k$. Therefore
+
+where $n_{k} = \sum_{i} \gamma^{i}_{k}$ is the current approximate
+posterior expected number of individuals assigned to population
+$k$. Therefore
+
 \begin{eqnarray*}
 p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}
 &\propto& \prod_{k}\pi_{k}^{\lambda^{0}_{k} - 1 + n_{k} },
 \end{eqnarray*}
-and the update is achieved by setting the hyperparameters equal to the sum of the prior counts and the current approximate posterior expected counts:
+
+and the update is achieved by setting the hyperparameters equal to the
+sum of the prior counts and the current approximate posterior expected
+counts:
+
 \begin{equation*}
 \lambda^{1}_{k} \leftarrow \lambda^{0}_{k} + n_{k}.
 \end{equation*}
 
-\subsubsection{Admixture model: updating the hyperparameters of $q(\pi)$} \label{q(pi)-update-admixture}
-We want to set $q(\pi)$ proportional to $p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$. This factorises across individuals as
+*** \subsubsection{Admixture model: updating the hyperparameters of $q(\pi)$}
+\label{q(pi)-update-admixture}
+
+We want to set $q(\pi)$ proportional to
+
+$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
+
+This factorises across individuals as
+
 \begin{equation*}
 p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} = \prod_{i} p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)\right\},
 \end{equation*}
-so we can update the hyperparameters of $p(\pi_{i\cdot})$ independently for each individual $i$. The expectation is
+
+so we can update the hyperparameters of $p(\pi_{i\cdot})$
+independently for each individual $i$. The expectation is
+
 \begin{eqnarray*}
 \E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)  &=& \E_{q(z\cdot\cdot)} \sum_{l} \sum_{a=1}^{2} \log \pi_{iz_{ila}} \\
 &=& \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \log \pi_{ik} \\
 &=& \sum_{k} \left[\log \pi_{ik}\right] \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k} \\
 &=& \sum_{k} \log \pi_{ik}^{m_{ik}} \\
 \end{eqnarray*}
-where $m_{ik} = \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k}$ is the current approximate posterior expected number of allele copies at all loci in individual $i$ that derive from population $k$. Therefore
+
+where $m_{ik} = \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k}$ is the
+current approximate posterior expected number of allele copies at all
+loci in individual $i$ that derive from population $k$. Therefore
+
 \begin{eqnarray*}
 p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi_{i\cdot})\right\}
 &\propto& \prod_{k}\pi_{ik}^{\lambda^{0}_{ik} - 1 + m_{ik} },
 \end{eqnarray*}
-and the update is achieved by setting the hyperparameters equal to the sum of the prior counts and the current approximate posterior expected counts:
+
+and the update is achieved by setting the hyperparameters equal to the
+sum of the prior counts and the current approximate posterior expected
+counts:
+
 \begin{equation*}
 \lambda^{1}_{ik} \leftarrow \lambda^{0}_{ik} + m_{ik}.
 \end{equation*}
 
-\subsubsection{No-admixture model: Updating the hyperparameters of $q(\mu)$} \label{q(mu)-update-no-admixture}
-We want to set $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$. This factorises across loci and populations as
+=FIXME: equal to a distribution proportional to=
+
+*** \subsubsection{No-admixture model: Updating the hyperparameters of $q(\mu)$}
+\label{q(mu)-update-no-admixture}
+
+We want to set $q(\mu)$ proportional to 
+
+$p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$.
+
+This factorises across loci and populations as
+
 \begin{eqnarray*}
 p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\} 
 &=& \left[\prod_{l}\prod_{k}p(\mu_{lk})\right]\exp\left\{\sum_{l} \sum_{i}\E_{q(z_{i})} \log p(x_{li\cdot}|\mu_{lz_{i}})\right\} \\
 &=& \prod_{l}\left[\prod_{k}p(\mu_{lk})\right]\exp\left\{\sum_{i} \sum_{k} \gamma^{i}_{k}\log p(x_{li\cdot}|\mu_{lk})\right\} \\
 &=& \prod_{l}\prod_{k}p(\mu_{lk})\exp\left\{\sum_{i} \gamma^{i}_{k}\log p(x_{li\cdot}|\mu_{lk})\right\}, \\
 \end{eqnarray*}
-so the approximate posterior distributions on allele frequencies can be updated separately in each population and at each locus.
+
+so the approximate posterior distributions on allele frequencies can
+be updated separately in each population and at each locus.
+
 \begin{eqnarray*}
 p(\mu_{lk})\exp\left\{\sum_{i} \gamma^{i}_{k}\log p(x_{li}|\mu_{lk})\right\}
 &=& p(\mu_{lk})\exp\left\{\sum_{i} \gamma^{i}_{k}\sum_{a}\sum_{j}\log \mu_{lkj}^{I(x_{lia}=j)}\right\} \\
 &\propto& \prod_{j}\mu_{lkj}^{\alpha^{0}_{lkj}}\exp\left\{\sum_{j} \log \mu_{lkj} \sum_{i} \sum_{a}\gamma^{i}_{k}I(x_{lia}=j)\right\} \\
 &=& \prod_{j}\mu_{lkj}^{\alpha^{0}_{lkj}}\exp\left\{n_{lkj}\log \mu_{lkj}\right\},\\
 \end{eqnarray*}
-where $n_{lkj} = \sum_{i} \sum_{a}\gamma^{i}_{k}I(x_{lia}=j)$ is the expected number of $j$ alleles observed at locus $l$ in population $k$, with the expectation taken w.r.t. $q(z)$. This results in
+
+where $n_{lkj} = \sum_{i} \sum_{a}\gamma^{i}_{k}I(x_{lia}=j)$ is the
+expected number of $j$ alleles observed at locus $l$ in population
+$k$, with the expectation taken w.r.t. $q(z)$. This results in
+
 \begin{equation*}
 q(\mu_{lk}) \propto \prod_{j} \mu_{lkj}^{\alpha^{0}_{lkj} - 1 + n_{lkj}},
 \end{equation*}
-which is fulfilled by setting the hyperparameters equal to the sum of the prior counts and the current approximate posterior expected counts:
+
+which is fulfilled by setting the hyperparameters equal to the sum of
+the prior counts and the current approximate posterior expected
+counts:
+
 \begin{equation*}
 \alpha^{1}_{lkj} \leftarrow \alpha^{0}_{lkj} + n_{lkj}.
 \end{equation*}
 
 
-\subsubsection{Admixture model: Updating the hyperparameters of $q(\mu)$} \label{q(mu)-update-admixture}
-We want to set $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$. This factorises across loci and populations as
+*** \subsubsection{Admixture model: Updating the hyperparameters of $q(\mu)$}
+\label{q(mu)-update-admixture}
+
+We want to set $q(\mu)$ proportional to
+
+$p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$.
+
+This factorises across loci and populations as
+
 \begin{eqnarray*}
 p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\} 
 &=& \left[\prod_{l}\prod_{k}p(\mu_{lk})\right]\exp\left\{\sum_{l} \sum_{i} \sum_{a=1}^{2}\E_{q(z_{i})} \log p(x_{ila}|\mu_{lz_{i}})\right\} \\
 &=& \prod_{l}\left[\prod_{k}p(\mu_{lk})\right]\exp\left\{\sum_{i} \sum_{a=1}^{2}\sum_{k} \gamma^{ila}_{k}\log p(x_{ila}|\mu_{lk})\right\} \\
 &=& \prod_{l}\prod_{k}p(\mu_{lk})\exp\left\{\sum_{i} \sum_{a=1}^{2} \gamma^{ila}_{k}\log p(x_{ila}|\mu_{lk})\right\}, \\
 \end{eqnarray*}
-so the approximate posterior distributions on allele frequencies can be updated separately in each population and at each locus.
+
+so the approximate posterior distributions on allele frequencies can
+be updated separately in each population and at each locus.
+
 \begin{eqnarray*}
 p(\mu_{lk})\exp\left\{\sum_{i} \sum_{a=1}^{2} \gamma^{ila}_{k}\log p(x_{ila}|\mu_{lk})\right\}
 &=& p(\mu_{lk})\exp\left\{\sum_{i} \sum_{a=1}^{2} \gamma^{ila}_{k} \sum_{j} \log \mu_{lkj}^{I(x_{lia}=j)}\right\} \\
 &\propto& \prod_{j}\mu_{lkj}^{\alpha^{0}_{lkj}-1}\exp\left\{\sum_{j} \left[\log \mu_{lkj}\right] \sum_{i} \sum_{a}\gamma^{ila}_{k}I(x_{lia}=j)\right\}\\
 &=& \prod_{j}\mu_{lkj}^{\alpha^{0}_{lkj}-1+m_{lkj}},\\
 \end{eqnarray*}
-where $m_{lkj} = \sum_{i} \sum_{a}\gamma^{ila}_{k}I(x_{ila}=j)$ is the expected number of $j$ alleles observed at locus $l$ in population $k$, with the expectation taken w.r.t. $q(z)$. The update is therefore achieved by setting
+
+where $m_{lkj} = \sum_{i} \sum_{a}\gamma^{ila}_{k}I(x_{ila}=j)$ is the
+expected number of $j$ alleles observed at locus $l$ in population
+$k$, with the expectation taken w.r.t. $q(z)$. The update is therefore
+achieved by setting
+
 \begin{equation*}
 \alpha^{1}_{lkj} \leftarrow \alpha^{0}_{lkj} + m_{lkj}.
 \end{equation*}
 
-\newpage
-\section{EM algorithm update for $\mu$ in correlated frequencies model}
+** \section{EM algorithm update for $\mu$ in correlated frequencies model}
 
 \paragraph{}
 The complete-data posterior density (assuming a flat prior on $q$) is
 
+#+begin_latex 
 \begin{align*}
 p(\theta|x,z) = p(\mu,q|x,z) \propto&~ p(\mu)p(q)p(z|q)p(x|z,\mu)                                                                     \\
 =&\prod_l  \( \prod_k p(\mu_{lk}) \) \( \prod_i p(z_{li}|q_{iz_{li}})p(x_{li}|\mu_{lz_{li}}) \),                                    \\
@@ -775,19 +865,25 @@ p(\theta|x,z) = p(\mu,q|x,z) \propto&~ p(\mu)p(q)p(z|q)p(x|z,\mu)               
 \intertext{With ancestral allele frequency $\alpha_l$ at locus $l$, and a Beta$(\alpha_lF_k',(1-\alpha_l)F_k')$ prior on the frequency in population $k$ ($F_k' = \frac{1-F_k}{F_k}$), and a Bernoulli likelihood, this is}
 \sum_l \sum_k \log \( \mu_{lk}^{\alpha F_k'-1}(1-\mu_{lk})^{(1-\alpha_k)F_k' - 1} \) &+ \sum_l \sum_k\sum_i \(\log \gamma_{ik}\)p_{\theta^*}(k\|x_{li})\\ &+ \sum_l \sum_k\sum_i  \log \Big(\mu_{lk}^{x_{li}}(1-\mu_{lk})^{(1-x_{li})} \Big)p_{\theta^*}(k\|x_{li}).
 \end{align*}
+#+end_latex
 
-\paragraph{$\mu$ update}
-The update for $\mu_{lk}$ maximises the locus $l$, population $k$ terms in the above expression. Temporarily drop $l$ and $k$ subscripts, and let $p_i(k) = p_{\theta^*}(k|x_{li})$. Differentiating the locus $l$, population $k$ terms in the above expression with respect to $\mu$ and setting equal to zero gives
+The update for $\mu_{lk}$ maximises the locus $l$, population $k$
+terms in the above expression. Temporarily drop $l$ and $k$
+subscripts, and let $p_i(k) = p_{\theta^*}(k|x_{li})$. Differentiating
+the locus $l$, population $k$ terms in the above expression with
+respect to $\mu$ and setting equal to zero gives
+
+#+begin_latex 
 \begin{align*}
 \frac{\alpha F' -1}{\mu} - \frac{(1-\alpha) F' -1}{1-\mu} + \sum_i \( \frac{x_i}{\mu} - \frac{1-x_i}{1-\mu} \) p_i(k) = 0\\
 \frac{1}{\mu(1-\mu)}\Bigg[(1-\mu)(\alpha F' -1) - \mu\((1-\alpha) F' -1\) + \sum_i \( (1-\mu)x_i - \mu(1-x_i) \) p_i(k)\Bigg] = 0\\
 \alpha F' -1 - \mu\Bigg((1-\alpha) F' -1 + \alpha F' - 1 + \sum_i p_i(k)\Bigg) + \sum_i x_i p_i(k) = 0,\\
 \end{align*}
+#+end_latex
 giving
 \[
 \mu = \frac{\sum_i x_i p_i(k) + \alpha F' -1}{\sum_i p_i(k) + F' - 2}
 \]
-#+end_src
 
 * References
 \bibliographystyle{genetres}
