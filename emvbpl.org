@@ -116,17 +116,23 @@ loci. The prior distributions of the allele frequencies are Dirichlet
 with hyperparameters \alpha^{(0)}, independently across loci and
 groups. The following algorithm simulates a data set from this model.
 
-#+begin_src python
-for each individual i:
+#+begin_latex
+\begin{algorithm}{No Admixture Model: Simulation}{n,L,K,\pi,\alpha}
+  \begin{FOR}{i \= 1 \TO n}
     Z_i \sim \pi
-
-for each locus l:
-    for each group k:
-        P_lk \sim Dirichlet(\alpha)
-    for each individual i:
-        for each chromosome a:
-            X_ila \sim P_lk
-#+end_src
+  \end{FOR} \\
+  \begin{FOR}{l \= 1 \TO L}
+    \begin{FOR}{k \= 1 \TO K}
+      P_{lk} \sim Dirichlet(\alpha)
+    \end{FOR} \\
+    \begin{FOR}{i \= 1 \TO n}
+      \begin{FOR}{a \= 1 \TO 2}
+        X_{ila} \sim P_{lk}
+      \end{FOR} \\
+    \end{FOR} \\
+  \end{FOR} \\
+\end{algorithm}
+#+end_latex
 
 See PSD for further details.
 
@@ -1090,7 +1096,7 @@ rm -f $(AUX) $(BBL) $(JUNK)
 #+latex_header: \bibpunct{(}{)}{,}{a}{}{,}
 #+latex_header: \usepackage{amsmath}
 #+latex_header: \usepackage{amssymb}
-#+latex_header: \usepackage{algorithmic}
+#+latex_header: \usepackage{newalg}
 #+latex_header: \usepackage{mathrsfs}
 #+latex_header: \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
 #+latex_header: \newcommand{\E}{\text{E}{}}
