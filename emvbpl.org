@@ -572,7 +572,9 @@ Since $q()$ factorises by definition,
 \end{align*}
 #+end_latex
 
-where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of $q(z)$.
+where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of
+$q(z)$. Computation of these four terms is described in Appendix
+\ref{sec:appendix-am-convergence}.
 
 ** Admixture model with correlated allele frequencies
 The correlated frequencies model affects how we update $q(\mu)$. The E
@@ -611,7 +613,6 @@ averaging across all loci.
 :ID:       5b050c13-e5a3-4561-8623-54af42c27253
 :END:
 #+latex: \label{sec:appendix}
-\appendix{}
 ** Updates in variational Bayes algorithm
 
 *** No-admixture model
