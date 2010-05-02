@@ -1075,20 +1075,23 @@ Inference of population structure from large genotype data sets: variational Bay
       (remove-if (lambda (el) (and (listp el) (equal (second el) "hyperref")))
 		 org-export-latex-default-packages-alist))
 
-      (setq org-export-latex-classes
-	    '(("article"
-	       "\\documentclass{article}
+(setq org-export-latex-classes
+      '(("article"
+	 "\\documentclass{article}
   [EXTRA]
   [PACKAGES]"
-	       ("\\section{%s}" . "\\section*{%s}")
-	       ("\\subsection{%s}" . "\\subsection*{%s}")
-	       ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-	       ("\\paragraph{%s}" . "\\paragraph*{%s}")
-	       ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
-      
-      (setq org-entities-user
-	    (mapcar (lambda (ent) (list ent ent t))
-		    '("i" "j" "k" "K" "l" "n" "p" "P" "q" "Q" "X" "Z")))
+	 ("\\section{%s}" . "\\section*{%s}")
+	 ("\\subsection{%s}" . "\\subsection*{%s}")
+	 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+	 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+	 ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+
+(setq org-entities-user
+      (mapcar (lambda (ent) (list ent ent t))
+	      '("i" "j" "k" "K" "l" "n" "p" "P" "q" "Q" "X" "Z")))
+
+(setq org-export-latex-packages-alist
+      '(("" "newalg" t)))
 #+end_src
 
 #+results:
