@@ -120,17 +120,17 @@ groups. The following algorithm simulates a data set from this model.
 \begin{algorithm}{No Admixture Model: Simulation}{n,L,K,\pi,\alpha}
   \begin{FOR}{i \= 1 \TO n}
     Z_i \sim \pi
-  \end{FOR} \\
+  \end{FOR}\\
   \begin{FOR}{l \= 1 \TO L}
     \begin{FOR}{k \= 1 \TO K}
       P_{lk} \sim Dirichlet(\alpha)
-    \end{FOR} \\
+    \end{FOR}\\
     \begin{FOR}{i \= 1 \TO n}
       \begin{FOR}{a \= 1 \TO 2}
-        X_{ila} \sim P_{lk}
-      \end{FOR} \\
-    \end{FOR} \\
-  \end{FOR} \\
+        X_{ila} \sim P_{lZ_i}
+      \end{FOR}\\
+    \end{FOR}\\
+  \end{FOR}\\
 \end{algorithm}
 #+end_latex
 
@@ -167,24 +167,24 @@ for each individual i:
         Z_ila \sim Q_i
         X_ila \sim P_{l Z_{ila}}
 #+end_src
-
+        
 #+begin_latex
-\begin{algorithmic}
-\FORALL{individuals $i$}
-    \STATE $Q_i \sim Dirichlet(\pi)$
-    \FORALL{locus $l$}
-        \FORALL{group $k$}
-            \STATE $P_{lk} \sim Dirichlet(\alpha^{(0)})$
-        \ENDFOR
-        \FORALL{individual $i$}
-            \FORALL{chromosome $a$}
-                \STATE $Z_{ila} \sim Q_i$
-                \STATE $X_{ila} \sim P_{l Z_{ila}}$
-            \ENDFOR
-        \ENDFOR
-    \ENDFOR
-\ENDFOR
-\end{algorithmic}
+\begin{algorithm}{Admixture Model: Simulation}{n,K,L,\pi,\alpha^{(0)}}
+  \begin{FOR}{i \= 1 \TO n}
+    Q_i \sim Dirichlet(\pi)
+  \end{FOR}\\
+  \begin{FOR}{l \= 1 \TO L}
+    \begin{FOR}{k \= 1 \TO K}
+      P_{lk} \sim Dirichlet(\alpha^{(0)})
+    \end{FOR}\\   
+    \begin{FOR}{i \= 1 \TO n}
+      \begin{FOR}{a \= 1 \TO 2}
+        Z_{ila} \sim Q_i\\
+        X_{ila} \sim P_{l Z_{ila}}
+      \end{FOR}\\
+    \end{FOR}\\                         
+  \end{FOR}\\                           
+\end{algorithm}
 #+end_latex
 
 ** F model
@@ -312,10 +312,10 @@ independently for all \l, \k.
 ***** Version 1
 For each $(i,k)$ compute
 #+begin_src latex
-            \begin{align*}
-            \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
-            &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
-            \end{align*}
+\begin{align*}
+  \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
+  &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
+\end{align*}
 #+end_src
 **** VB
 ***** Version 1
@@ -342,6 +342,21 @@ algorithm:
       - Compute $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
    2. For each \k
       - $\gamma^{i}_{k} \leftarrow $\gamma^{i}_{k} / \sum_{k'} $\gamma^{i}_{k'}
+
+#+begin_latex
+\begin{algorithm}{E step}{}
+  \begin{FOR}{i \= 1 \TO n}
+    \begin{FOR}{k \= 1 \TO K}
+      \gamma^{i}_{k} \leftarrow \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}
+    \end{FOR}\\
+    \begin{FOR}{k \= 1 \TO K}
+      \gamma^{i}_{k} \leftarrow \gamma^{i}_{k} / \sum_{k'} \gamma^{i}_{k'}
+    \end{FOR}\\
+  \end{FOR}\\
+\end{algorithm}
+#+end_latex
+
+
 
 It is shown in appendix \ref{sec:appendix-nam-E} that
 \begin{equation*}
@@ -409,12 +424,12 @@ algorithm (appendix \ref{sec:appendix-nam-M-pi}):
 #+end_latex
 
 #+begin_latex
-\begin{algorithmic}
-\FORALL{groups $k$}
-    \STATE $n_{k} \gets \sum_{i}\gamma^{i}_{k}$
-    \STATE $\lambda^{1}_{k} \gets \lambda^{0}_{k} + n_{k}$
-\ENDFOR
-\end{algorithmic}
+%% \begin{algorithmic}
+%% \FORALL{groups $k$}
+%%     \STATE $n_{k} \gets \sum_{i}\gamma^{i}_{k}$
+%%     \STATE $\lambda^{1}_{k} \gets \lambda^{0}_{k} + n_{k}$
+%% \ENDFOR
+%% \end{algorithmic}
 #+end_latex
 
 **** Updating the approximate posterior on allele frequencies
@@ -454,6 +469,33 @@ each iteration. Since $q()$ factorises by assumption/definition,
 where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of
 $q(z)$. Computation of these four terms is described in Appendix
 \ref{sec:appendix-nam-convergence} .
+*** EM algorithm                                                     :export:
+#+begin_latex
+\begin{algorithm}{No Admixture: EM algorithm}{n,K,L,X}
+  \\\\
+  \text{E step}\\\\
+  \begin{FOR}{\EACH i \IN 1 \ldots n}
+    \begin{FOR}{\EACH k \IN 1 \ldots K}
+      \gamma_i^k = \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}
+    \end{FOR}
+  \end{FOR}
+  \\\\
+  \text{M step}\\\\
+  \begin{FOR}{\EACH k \IN 1 \ldots K}
+      \pi_{k} \leftarrow \frac{1}{n}\sum_{i} \gamma_i^k\\
+      \begin{FOR}{\EACH l \IN 1 \ldots L}
+        \begin{FOR}{\EACH j \IN 1 \ldots J_L}
+          P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
+        \end{FOR}
+      \end{FOR}
+  \end{FOR}
+\end{algorithm}
+
+\begin{lstlisting}[mathescape]
+for i = 1,...,n
+    x $\leftarrow e^{i\pi}$
+\end{lstlisting}
+#+end_latex
 ** Admixture model
 In the Admixture model, the unobserved quantities are \Z, \Q and
 \P. As in the No Admixture model, we specify that approximate
