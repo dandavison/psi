@@ -1137,25 +1137,30 @@ clean:
 rm -f $(AUX) $(BBL) $(JUNK)
 #+end_src
 
-** LaTeX headers
-#+latex_header: \usepackage[sectionbib]{natbib}
-#+latex_header: \bibpunct{(}{)}{,}{a}{}{,}
-#+latex_header: \usepackage{amsmath}
-#+latex_header: \usepackage{amssymb}
-#+latex_header: \usepackage{newalg}
-#+latex_header: \usepackage{mathrsfs}
-#+latex_header: \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
-#+latex_header: \newcommand{\E}{\text{E}{}}
-#+latex_header: \newcommand{\NL}{\nonumber\\}
-#+latex_header: \let\(\undefined
-#+latex_header: \let\)\undefined
-#+latex_header: \newcommand{\(}{\left(}
-#+latex_header: \newcommand{\)}{\right)}
-#+latex_header: \let\|\undefined
-#+latex_header: \newcommand{\|}{\arrowvert}
-#+latex_header: \renewcommand{\digamma}{\Psi}
-#+latex_header: \renewcommand*{\labelitemi}{\textbullet}
-#+latex_header: \renewcommand*{\labelitemii}{\labelitemi}
-#+latex_header: \renewcommand*{\labelitemiii}{\labelitemi}
-#+latex_header: \renewcommand*{\labelitemiv}{\labelitemi}
+** emvbpl.sty
+#+begin_src latex :tangle emvbpl.sty
+\usepackage[sectionbib]{natbib}
+\bibpunct{(}{)}{,}{a}{}{,}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{newalg}
+\usepackage{listings}
+\usepackage{mathrsfs}
+\usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
+\newcommand{\E}{\text{E}{}}
+\newcommand{\NL}{\nonumber\\}
+\let\(\undefined
+\let\)\undefined
+\newcommand{\(}{\left(}
+\newcommand{\)}{\right)}
+\let\|\undefined
+\newcommand{\|}{\arrowvert}
+\renewcommand{\digamma}{\Psi}
+\renewcommand*{\labelitemi}{\textbullet}
+\renewcommand*{\labelitemii}{\labelitemi}
+\renewcommand*{\labelitemiii}{\labelitemi}
+\renewcommand*{\labelitemiv}{\labelitemi}
+#+end_src
 
+** LaTeX headers
+#+latex_header: \usepackage{emvbpl}
