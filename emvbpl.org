@@ -469,33 +469,59 @@ each iteration. Since $q()$ factorises by assumption/definition,
 where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of
 $q(z)$. Computation of these four terms is described in Appendix
 \ref{sec:appendix-nam-convergence} .
-*** EM algorithm                                                     :export:
+*** EM algorithm
 #+begin_latex
-\begin{algorithm}{No Admixture: EM algorithm}{n,K,L,X}
-  \\\\
-  \text{E step}\\\\
-  \begin{FOR}{\EACH i \IN 1 \ldots n}
-    \begin{FOR}{\EACH k \IN 1 \ldots K}
-      \gamma_i^k = \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}
-    \end{FOR}
-  \end{FOR}
-  \\\\
-  \text{M step}\\\\
-  \begin{FOR}{\EACH k \IN 1 \ldots K}
-      \pi_{k} \leftarrow \frac{1}{n}\sum_{i} \gamma_i^k\\
-      \begin{FOR}{\EACH l \IN 1 \ldots L}
-        \begin{FOR}{\EACH j \IN 1 \ldots J_L}
-          P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
-        \end{FOR}
-      \end{FOR}
-  \end{FOR}
-\end{algorithm}
+%% \begin{algorithm}{No Admixture: EM algorithm}{n,K,L,X}
+%%   \\\\
+%%   \text{E step}\\\\
+%%   \begin{FOR}{\EACH i \IN 1 \ldots n}
+%%     \begin{FOR}{\EACH k \IN 1 \ldots K}
+%%       \gamma_i^k = \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}
+%%     \end{FOR}
+%%   \end{FOR}
+%%   \\\\
+%%   \text{M step}\\\\
+%%   \begin{FOR}{\EACH k \IN 1 \ldots K}
+%%       \pi_{k} \leftarrow \frac{1}{n}\sum_{i} \gamma_i^k\\
+%%       \begin{FOR}{\EACH l \IN 1 \ldots L}
+%%         \begin{FOR}{\EACH j \IN 1 \ldots J_L}
+%%           P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
+%%         \end{FOR}
+%%       \end{FOR}
+%%   \end{FOR}
+%% \end{algorithm}
 
-\begin{lstlisting}[mathescape]
-for i = 1,...,n
-    x $\leftarrow e^{i\pi}$
-\end{lstlisting}
+%% \begin{lstlisting}[mathescape]
+%% for i = 1,...,n
+%%     x $\leftarrow e^{i\pi}$
+%% \end{lstlisting}
 #+end_latex
+
+#+begin_latex
+\begin{algorithm}
+  \caption{EM algorithm}
+  \label{EM algorithm}
+  \begin{lstlisting}[mathescape]
+
+    E step
+
+    for $i$ in $1, \ldots, n$
+        for $k$ in $1, \ldots, K$
+            $\gamma_i^k \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+
+    M step
+
+    for $k$ in $1 \ldots K$
+        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_i^k$
+        for $l$ in $1, \ldots, L$
+            for $j$ in $1,\ldots,J_L$
+                $P_{lkj} \gets \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}$
+
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
+
 ** Admixture model
 In the Admixture model, the unobserved quantities are \Z, \Q and
 \P. As in the No Admixture model, we specify that approximate
@@ -1078,8 +1104,8 @@ Inference of population structure from large genotype data sets: variational Bay
 (setq org-export-latex-classes
       '(("article"
 	 "\\documentclass{article}
-  [EXTRA]
-  [PACKAGES]"
+[PACKAGES]
+[EXTRA]"
 	 ("\\section{%s}" . "\\section*{%s}")
 	 ("\\subsection{%s}" . "\\subsection*{%s}")
 	 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
@@ -1160,6 +1186,10 @@ rm -f $(AUX) $(BBL) $(JUNK)
 \renewcommand*{\labelitemii}{\labelitemi}
 \renewcommand*{\labelitemiii}{\labelitemi}
 \renewcommand*{\labelitemiv}{\labelitemi}
+
+\usepackage{float}
+\newfloat{algorithm}{thp}{lop}
+\floatname{algorithm}{Algorithm}
 #+end_src
 
 ** LaTeX headers
