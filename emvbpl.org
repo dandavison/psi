@@ -293,17 +293,17 @@ fitting this model (Algorithm \ref{alg:em-nam}).
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_i^k \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+            $\gamma_{ik} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
         '\foreach group $k$'
-            $\gamma_i^k \gets \gamma_i^k / \sum_{k'} \gamma_i^{k'}$
+            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
 
     '\textbf{M step}'
 
     '\foreach group $k$'
-        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_i^k$
+        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_{ik}$
         '\foreach locus $l$'
             '\foreach allele type $j$'
-                $P_{lkj} \gets \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}$
+                $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ik}}{\sum_i\sum_a\gamma_{ik}}$
   \end{lstlisting}
 \end{algorithm}
 #+end_latex
@@ -337,9 +337,9 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
+            $\gamma_{ik} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
         '\foreach group $k$'
-            $\gamma^i_k \gets \gamma^i_k / \sum_{k'} \gamma^i_{k'}$
+            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
 
     '\textbf{M step}'
 
@@ -361,15 +361,15 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma^{i}_{k} =
+            $\gamma_{ik} =
         \exp \Big\{
-        \digamma\Big(\lambda^{1}_{k}\Big) -
-        \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) +
-        \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] -
-        2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big)
+        \digamma\Big(\lambda^{(1)}_{k}\Big) -
+        \digamma\Big(\sum_{k'}\lambda^{(1)}_{k'}\Big) +
+        \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big)\right] -
+        2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
         \Big\}$
         '\foreach group $k$'
-            $\gamma^i_k \gets \gamma^i_k / \sum_{k'} \gamma^i_{k'}$
+            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
 
     '\textbf{M step}'
 
