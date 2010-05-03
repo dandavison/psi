@@ -370,10 +370,11 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\textbf{M step}'
 
-    $q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$
     '\foreach group $k$'
+        $\lambda^{(1)}_{k} \leftarrow \lambda^{(0)}_{k} + \sum_{i} \gamma_{ik}$
         '\foreach locus $l$'
-             $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$
+            '\foreach allele type $j$'
+                $\alpha^{(1)}_{lkj} \leftarrow \alpha^{(0)}_{lkj} + \sum_{i} \sum_{a}\gamma_{ik}I(X_{ila}=j)$
   \end{lstlisting}
 \end{algorithm}
 #+end_latex
