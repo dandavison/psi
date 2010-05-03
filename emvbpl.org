@@ -115,9 +115,13 @@ frequencies at each locus. Hardy-Weinberg and linkage equilibrium are
 assumed so that the data for an individual from population k would be
 simulated from the prior by drawing alleles from the allele frequency
 distribution for population k, independently across chromosomes and
-loci. The prior distributions of the allele frequencies are Dirichlet
-with hyperparameters \alpha^{(0)}, independently across loci and
-groups. The following algorithm simulates a data set from this model.
+loci. I use a Dirichlet prior distribution for the allele frequencies
+in each population at each locus with hyperparameters \alpha^{(0)},
+independently across loci and groups. \fixme{Dimension of Dirichlet
+varies with number of alleles at locus} The following algorithm
+simulates a data set from this model.
+
+
 
 #+begin_latex
 \begin{algorithm}
@@ -156,8 +160,6 @@ independently across individuals, and the prior for the allele
 frequencies is the same as in the No Admixture Model. The following
 algorithm simulates a data set from the Admixture Model model.
 
-=FIXME: \pi or \lambda?=
-
 #+begin_latex
 \begin{algorithm}
   \caption{Admixture Model}
@@ -185,7 +187,7 @@ population. The following algorithm simulates a data set under the F
 model without admixture. The extension to admixture is obvious by
 comparison with algorithm \ref{alg:am-sim} above.
 
-=FIXME: move this to later?=
+\fixme{F model here or in discussion?}
 
 * Introduction to Variational Bayes
 The basic idea of VB is to assume a specific parametric form for the
@@ -237,8 +239,8 @@ maximum value of $F(q,p)$ approximates $\log \Pr(X|K)$, the posterior
 distribution of the number \K of mixture components can be
 investigated by fitting the model at several different values of \K.
 
-=FIXME: In the next section we switch back to separating the
-integer-valued Z from the real-valued \phi=
+\fixme{In the next section we switch back to separating the
+integer-valued $Z$ from the real-valued $\phi$}
 
 * Fitting the models via Variational Bayes
 :PROPERTIES:
@@ -276,6 +278,7 @@ following update scheme:
 In the following sections I focus on the E step, the M step and
 assessing convergence. In all cases the full algorithm is of the
 following form:
+\fixme{Not going to discuss Gibbs sampler algorithm at all?}   
 
 1. Set parameters (EM) / hyperparameters (VB) to their initial values.
 2. E step
@@ -323,8 +326,8 @@ $q(P_{lk\cdot}) is
 Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
 independently for all \l, \k.
 
-=FIXME: what are we saying about q(Z)=
-=FIXME: how is the notation going to differentiate among these different q distributions?=
+\fixme{what are we saying about q(Z)}
+\fixme{how is the notation going to differentiate among these different q distributions?}
 
 Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
@@ -859,7 +862,7 @@ counts:
 \lambda^{1}_{ik} \leftarrow \lambda^{0}_{ik} + m_{ik}.
 \end{equation*}
 
-=FIXME: equal to a distribution proportional to=
+\fixme{Clarify use of $\propto$ notation}
 
 ***** Updating the hyperparameters of $q(\mu)$
 \label{sec:appendix-am-M-P}
@@ -1071,6 +1074,7 @@ rm -f $(AUX) $(BBL) $(JUNK)
 \usepackage{amssymb}
 \usepackage{listings}
 \usepackage{mathrsfs}
+\usepackage{color}
 \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
 \newcommand{\E}{\text{E}{}}
 \newcommand{\NL}{\nonumber\\}
@@ -1093,6 +1097,8 @@ rm -f $(AUX) $(BBL) $(JUNK)
 
 \newcommand{\foreach}{\textbf{for each }}
 \newcommand{\Dirichlet}{\text{Dirichlet}}
+
+\newcommand{\fixme}[1]{\footnote{\textcolor{red}{\textbf{FIXME} #1}}}
 #+end_src
 
 ** LaTeX headers
