@@ -58,35 +58,38 @@ paper.
 
 #+caption: Notation used
 #+label: tbl:notation
-| Notation             | Meaning                                                                                           |
-|----------------------+---------------------------------------------------------------------------------------------------|
-| $n$                  | Number of individuals                                                                             |
-| $L$                  | Number of marker loci                                                                             |
-| $J_l$                | Number of alleles at locus l                                                                      |
-| $K$                  | Number of groups in mixture model                                                                 |
-| $i$                  | Indexes individuals: i \in {1,\ldots,n}                                                           |
-| $l$                  | Indexes loci: l \in {1,\ldots,L}                                                                  |
-| $j$                  | Indexes alleles: j \in {1,\ldots,J_l}                                                             |
-| $a$                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                            |
-| $X_{ila}$            | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}           |
-| $\phi_k$             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                             |
-| $P_{lk}$             | Allele frequencies at locus l in group k                                                          |
-| $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                       |
-| $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                 |
-| $~$                  |                                                                                                   |
-|                      |                                                                                                   |
-| No Admixture Model   |                                                                                                   |
-|----------------------+---------------------------------------------------------------------------------------------------|
-| Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                        |
-| $\pi_k$              | Intensity of group k in the mixture                                                               |
-| $~$                  |                                                                                                   |
-|                      |                                                                                                   |
-| Admixture Model      |                                                                                                   |
-|----------------------+---------------------------------------------------------------------------------------------------|
-| Z_{ila}              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K} |
-| $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                           |
-| $\lambda_k^{(0)}$    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                       |
-| $\lambda_{ik}^{(1)}$ | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                    |
+| Notation             | Meaning                                                                                                       |
+|----------------------+---------------------------------------------------------------------------------------------------------------|
+| $n$                  | Number of individuals                                                                                         |
+| $L$                  | Number of marker loci                                                                                         |
+| $J_l$                | Number of alleles at locus l                                                                                  |
+| $K$                  | Number of groups in mixture model                                                                             |
+| $i$                  | Indexes individuals: i \in {1,\ldots,n}                                                                       |
+| $l$                  | Indexes loci: l \in {1,\ldots,L}                                                                              |
+| $j$                  | Indexes alleles: j \in {1,\ldots,J_l}                                                                         |
+| $a$                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                                        |
+| $X_{ila}$            | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}                       |
+| $\phi_k$             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                                         |
+| $P_{lk}$             | Allele frequencies at locus l in group k                                                                      |
+| $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                                   |
+| $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                             |
+| $\digamma$           | The digamma function                                                                                          |
+| $~$                  |                                                                                                               |
+|                      |                                                                                                               |
+| No Admixture Model   |                                                                                                               |
+|----------------------+---------------------------------------------------------------------------------------------------------------|
+| Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                                    |
+| $\pi_k$              | Intensity of group k in the mixture                                                                           |
+| $\gamma_ik$          | Posterior probability that individual $i$ was generated from group $k$                                        |
+| $~$                  |                                                                                                               |
+|                      |                                                                                                               |
+| Admixture Model      |                                                                                                               |
+|----------------------+---------------------------------------------------------------------------------------------------------------|
+| Z_{ila}              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K}             |
+| $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                                       |
+| $\lambda_k^{(0)}$    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                                   |
+| $\lambda_{ik}^{(1)}$ | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                                |
+| $\gamma_ilak$        | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k   |
 
 * Models
 :PROPERTIES:
