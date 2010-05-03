@@ -430,8 +430,6 @@ In the Admixture model, the unobserved quantities are \Z, \Q and
 #+end_latex
 
 *** VB
-
-
 As in the No Admixture model, we specify that approximate
 posterior density $q(Z,Q,P)$ can be factorised as $q(Z)q(Q)q(P)$ and
 that each of these three components has the same parameteric form as
@@ -513,25 +511,24 @@ where $\digamma$ is the digamma function.
 Using the current distribution $p(z)$, the M step involves setting
 $q(\theta)$ proportional to
 
-#+begin_latex
+
 \begin{eqnarray*}
   p(\theta)\exp\left\{\E_{q(z)} \log p(z,x|\theta)\right\} \\
   &=& 
   p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} \times 
   p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\},
 \end{eqnarray*}
-#+end_latex
+
 
 and so the updates for $q(\pi)$ and $q(\mu)$ can be performed
 separately, by setting
 
-#+begin_latex
+
 \begin{equation*}
   q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}
   \text{~~~~and~~~~}
   q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}.
 \end{equation*}
-#+end_latex
 
 **** Updating the approximate posterior on admixture proportions
 The hyperparameters of $q(\pi)$ are updated according to the following
@@ -540,7 +537,6 @@ algorithm (see Appendix \ref{sec:appendix-am-M-pi}):
 **** Updating the approximate posterior on allele frequencies
 The hyperparameters of $q(\mu)$ are updated according to the following
 algorithm (see Appendix \ref{sec:appendix-am-M-P}):
-
 *** Monitoring convergence
 Since $q()$ factorises by definition,
 
