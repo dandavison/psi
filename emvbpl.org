@@ -80,7 +80,7 @@ paper.
 |----------------------+---------------------------------------------------------------------------------------------------------------|
 | Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                                    |
 | $\pi_k$              | Intensity of group k in the mixture                                                                           |
-| $\gamma_ik$          | Posterior probability that individual $i$ was generated from group $k$                                        |
+| $\gamma_{ik}$        | Posterior probability that individual $i$ was generated from group $k$                                        |
 | $~$                  |                                                                                                               |
 |                      |                                                                                                               |
 | Admixture Model      |                                                                                                               |
@@ -89,7 +89,7 @@ paper.
 | $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                                       |
 | $\lambda_k^{(0)}$    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                                   |
 | $\lambda_{ik}^{(1)}$ | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                                |
-| $\gamma_ilak$        | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k   |
+| $\gamma_{ilak}$      | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k   |
 
 * Models
 :PROPERTIES:
