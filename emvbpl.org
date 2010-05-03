@@ -438,9 +438,9 @@ posterior density $q(Z,Q,P)$ can be factorised as $q(Z)q(Q)q(P)$ and
 that each of these three components has the same parameteric form as
 in the prior, differing only in the hyperparameters. Specifically, we
 specify that the ancestry vectors $q(Q_{i\cdot})$ are each
-Dirichlet(\lambda^{1}_{i1},\ldots,\lambda^{1}_{iK})$ and, as in the No
-Admixture model, that $q(P_{lk\cdot}) is
-Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
+$\Dirichlet(\lambda^{1}_{i1},\ldots,\lambda^{1}_{iK})$ and, as in the No
+Admixture model, that $q(P_{lk\cdot})$ is
+$\Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
 independently for all \l, \k.
 
 Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
@@ -466,7 +466,7 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
         $q(Q_{i\cdot}) \propto \Pr(Q_{i\cdot})\exp\left\{\E_{q(Z)} \log \Pr(Z|Q_i)\right\}$
     '\foreach group $k$'
         '\foreach locus $l$'
-            $q(P_{lk\cdot}) \propto \Pr(P_{lk\cdot})\exp\left\{\E_{q(Z)} \log p(X|\P_{lk\cdot},Z)\right\}$
+            $q(P_{lk\cdot}) \propto \Pr(P_{lk\cdot})\exp\left\{\E_{q(Z)} \log p(X|P_{lk\cdot},Z)\right\}$
   \end{lstlisting}
 \end{algorithm}
 #+end_latex
@@ -485,10 +485,10 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
                 '\foreach group $k$'
                     $\gamma_{ilak} \gets
                 \exp\Big\{
-                \digamma\Big(\lambda^{1}_{ik}\Big) -
-                \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) +
-                \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) -
-                \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big)
+                \digamma\Big(\lambda^{(1)}_{ik}\Big) -
+                \digamma\Big(\sum_{k'=1}^K\lambda^{(1)}_{ik'}\Big) +
+                \digamma\Big(\alpha^{(1)}_{klx_{lia}}\Big) -
+                \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
                 \Big\}$
                  'Normalise the distribution $\gamma_{ila\cdot}$'
 
@@ -496,10 +496,10 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
 
     '\foreach group $k$'
         '\foreach individual $i$'
-            $\lambda^{(1)}_{ik} \leftarrow \lambda^{(0)}_{ik} + \sum_{l} \sum_{a=1}^{2} \gamma_{ilak}$
+            $\lambda^{(1)}_{ik} \leftarrow \lambda^{(0)}_{ik} + \sum_{l=1}^L \sum_{a=1}^{2} \gamma_{ilak}$
         '\foreach locus $l$'
             '\foreach allele type $j$'
-                $\alpha^{(1)}_{lkj} \leftarrow \alpha^{(0)}_{lkj} + \sum_{i} \sum_{a}\gamma_{ilak}I(X_{ila}=j)$
+                $\alpha^{(1)}_{lkj} \leftarrow \alpha^{(0)}_{lkj} + \sum_{i=1}^n \sum_{a=1}^2\gamma_{ilak}I(X_{ila}=j)$
   \end{lstlisting}
 \end{algorithm}
 #+end_latex
