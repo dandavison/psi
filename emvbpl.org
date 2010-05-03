@@ -56,40 +56,40 @@ implemented in the software package =psi= available at [psi
 URL]. Table \ref{tbl:notation} contains notation used throughout the
 paper.
 
-#+caption: Notation used
+#+caption: Notation
 #+label: tbl:notation
-| Notation             | Meaning                                                                                                       |
-|----------------------+---------------------------------------------------------------------------------------------------------------|
-| $n$                  | Number of individuals                                                                                         |
-| $L$                  | Number of marker loci                                                                                         |
-| $J_l$                | Number of alleles at locus l                                                                                  |
-| $K$                  | Number of groups in mixture model                                                                             |
-| $i$                  | Indexes individuals: i \in {1,\ldots,n}                                                                       |
-| $l$                  | Indexes loci: l \in {1,\ldots,L}                                                                              |
-| $j$                  | Indexes alleles: j \in {1,\ldots,J_l}                                                                         |
-| $a$                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                                        |
-| $X_{ila}$            | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}                       |
-| $\phi_k$             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                                         |
-| $P_{lk}$             | Allele frequencies at locus l in group k                                                                      |
-| $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                                   |
-| $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                             |
-| $\digamma$           | The digamma function                                                                                          |
-| $~$                  |                                                                                                               |
-|                      |                                                                                                               |
-| No Admixture Model   |                                                                                                               |
-|----------------------+---------------------------------------------------------------------------------------------------------------|
-| Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                                    |
-| $\pi_k$              | Intensity of group k in the mixture                                                                           |
-| $\gamma_{ik}$        | Posterior probability that individual $i$ was generated from group $k$                                        |
-| $~$                  |                                                                                                               |
-|                      |                                                                                                               |
-| Admixture Model      |                                                                                                               |
-|----------------------+---------------------------------------------------------------------------------------------------------------|
-| Z_{ila}              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K}             |
-| $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                                       |
-| $\lambda_k^{(0)}$    | Hyperparameter of  Dirichlet prior on ancestry proportions (same for all i)                                   |
-| $\lambda_{ik}^{(1)}$ | Hyperparameter of  Dirichlet posterior on ancestry proprtions for individual i                                |
-| $\gamma_{ilak}$      | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k   |
+| Notation             | Meaning                                                                                                     |
+|----------------------+-------------------------------------------------------------------------------------------------------------|
+| $n$                  | Number of individuals                                                                                       |
+| $L$                  | Number of marker loci                                                                                       |
+| $J_l$                | Number of alleles at locus l                                                                                |
+| $K$                  | Number of groups in mixture model                                                                           |
+| $i$                  | Indexes individuals: i \in {1,\ldots,n}                                                                     |
+| $l$                  | Indexes loci: l \in {1,\ldots,L}                                                                            |
+| $j$                  | Indexes alleles: j \in {1,\ldots,J_l}                                                                       |
+| $a$                  | Indexes chromosomes: a \in {1,2} = {maternal,paternal}                                                      |
+| $X_{ila}$            | Identity of allele on chromosome a at locus l in individual i: X_ila \in {1,\ldots,J_l}                     |
+| $\phi_k$             | Model parameters in mixture model with k groups: \phi_k=(\mu_k, ...?)                                       |
+| $P_{lk}$             | Allele frequencies at locus l in group k                                                                    |
+| $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                                 |
+| $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                           |
+| $\digamma$           | The digamma function                                                                                        |
+| $~$                  |                                                                                                             |
+|                      |                                                                                                             |
+| No Admixture Model   |                                                                                                             |
+|----------------------+-------------------------------------------------------------------------------------------------------------|
+| Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                                  |
+| $\pi_k$              | Intensity of group k in the mixture                                                                         |
+| $\gamma_{ik}$        | Posterior probability that individual $i$ was generated from group $k$                                      |
+| $~$                  |                                                                                                             |
+|                      |                                                                                                             |
+| Admixture Model      |                                                                                                             |
+|----------------------+-------------------------------------------------------------------------------------------------------------|
+| Z_{ila}              | Unknown group label for allele on chromosome a at locus l in individual i: Z_ila \in {1,\ldots,K}           |
+| $Q_{ik}$             | Unknown genome-wide proportion of ancestry of individual i from group k                                     |
+| $\lambda_k^{(0)}$    | Hyperparameter of Dirichlet prior on ancestry proportions (same for all i)                                  |
+| $\lambda_{ik}^{(1)}$ | Hyperparameter of Dirichlet posterior on ancestry proportions for individual i                              |
+| $\gamma_{ilak}$      | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k |
 
 * Models
 :PROPERTIES:
@@ -99,12 +99,13 @@ paper.
 
 ** No Admixture model
 In the basic mixture modelling problem, n items {X_i,\ldots,X_n} are
-observed and each is assumed to belong to one of K groups. Each item
-X_i has an unknown label Z_i \in {1,\ldots,K} indicating the group to
-which it belongs. The main objectives are to learn about the values of
-these labels, and about the value of K. Group k is characterised by a
-probability distribution f(x;\phi_k), and inference for K and Z
-typically also requires inference for the parameters \phi_k.
+observed and each is assumed to belong to one of K groups. Thus for
+each item there is an unknown label Z_i \in {1,\ldots,K} indicating
+the group to which it belongs. The main objectives are to learn about
+the values of these labels, and about the value of K. Group k is
+characterised by a probability distribution f(x;\phi_k), and inference
+for K and Z typically also requires inference for the parameters
+\phi_k.
 
 The ``No-Admixture Model'' of \citet{Pritchard_et_al_2000} is an
 example of this class of models: X_i is a data set of multilocus
@@ -165,7 +166,7 @@ algorithm simulates a data set from the Admixture Model model.
   \caption{Admixture Model}
   \begin{lstlisting}[mathescape,escapeinside='']
 '\foreach individual' $i$:
-    $Q_i \sim \Dirichlet(\pi)$
+    $Q_i \sim \Dirichlet(\lambda^{(0)})$
 
 '\foreach locus' $l$:
     '\foreach group' $k$:
@@ -249,19 +250,32 @@ integer-valued $Z$ from the real-valued $\phi$}
 \label{sec:model-fitting}
 ** General comments
 \citet{Pritchard_et_al_2000} and \citet{Falush_et_al_2003} described
-how to fit the above models using MCMC. In this section I describe
-how to fit these models using Variational Bayes (VB).
+how to fit the above models using MCMC. In this section I describe how
+to fit these models using Variational Bayes (VB). The VB algorithms
+bear a strong similarity to Expectation-Maximization (EM) algorithms,
+having the following form:
 
-The VB algorithms bear a strong similarity to Expectation-Maximization
-(EM) algorithms, and a simple heuristic description is that both
-methods work by iterating the following steps:
+1. Set parameters (EM) / hyperparameters (VB) to their initial values.
+2. E step
+3. M step
+4. Stop if converged, otherwise go to (2).
 
-1. E step :: Compute the discrete probability distribution \Pr(Z|X)
-             on the unknown cluster indicators, using the current parameter
-             estimates.
-2. M step :: Use the current distribution \Pr(Z|X) to update the
-             parameter estimates.
+In the following sections I focus on the E step, the M step and
+assessing convergence.
 
+A simple heuristic description is that both methods work by iterating
+the following steps:
+
+\paragraph{E step}
+Compute the discrete probability distribution \Pr(Z|X)
+on the unknown cluster indicators, using the current parameter
+estimates.
+
+\paragraph{M step}
+Use the current distribution \Pr(Z|X) to update the parameter
+estimates.
+
+\paragraph{}
 In EM, the E step is accomplished straightforwardly using Bayes rule
 and current point estimates of the parameters P and Q. In contrast, in
 VB the term "parameters" in the above refers to hyperparameters
@@ -270,21 +284,13 @@ step is accomplished by averaging over the current posterior densities
 for \P and \Q. \citet{Somepeople} show that this is achieved by the
 following update scheme:
 
-1. E Step ::
+\paragraph{E Step}
    Set $q(Z) \propto \exp\left\{\E_{q(\phi)} \log p(Z,X|\phi)\right\}$
-2. M Step ::
+\paragraph{M Step}
    Set $q(\phi) \propto \Pr(\phi) \exp\left\{\E_{q(Z)} \log p(Z,X|\phi)\right\}$
 
-In the following sections I focus on the E step, the M step and
-assessing convergence. In all cases the full algorithm is of the
-following form:
 \fixme{Not going to discuss Gibbs sampler algorithm at all?}   
 
-1. Set parameters (EM) / hyperparameters (VB) to their initial values.
-2. E step
-3. M step
-4. Stop if converged, otherwise go to (2).
- 
 ** No Admixture model
 In this case the parameters are P (allele frequencies) and $\pi$
 (cluster intensities). We start by considering the EM algorithm for
@@ -320,17 +326,16 @@ To fit the No Admixture model via VB, we specify that the approximate
 posterior density $q(Z,\pi,P)$ can be factorised as $q(Z)q(\pi)q(\mu)$
 and that each of these three components has the same parametric form
 as the prior, differing only in the hyperparameters. In other words,
-we specify that q(\pi) is
-Dirichlet(\lambda^{1}_{1},\ldots,\lambda^{1}_{K}), and that
-$q(P_{lk\cdot}) is
-Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
+we specify that $q(\pi)$ is
+$\Dirichlet(\lambda^{1}_{1},\ldots,\lambda^{1}_{K})$, and that
+$q(P_{lk\cdot})$ is
+$\Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
 independently for all \l, \k.
 
 \fixme{what are we saying about q(Z)}
 \fixme{how is the notation going to differentiate among these different q distributions?}
 
 Let $\gamma^{i}_{k} = q(z_{i}=k)$
-
 
 #+begin_latex
 \begin{algorithm}
@@ -409,30 +414,30 @@ In the Admixture model, the unobserved quantities are \Z, \Q and
 \P. 
 *** EM
 #+begin_latex
-\begin{algorithm}
-  \caption{Admixture model: EM}
-  \label{alg:em-nam}
-  \begin{lstlisting}[mathescape,escapeinside='']
-
-    '\textbf{E step}'
-
-    '\foreach individual $i$'
-        '\foreach locus $l$'
-            '\foreach chromosome $a$'
-                '\foreach group $k$'
-                    $\gamma_{ilak} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-                'Normalise the distribution $\gamma_{ila\cdot}$'
-
-    '\textbf{M step}'
-
-    '\foreach group $k$'
-        '\foreach individual $i$'
-            $Q_{ik} \gets \frac{1}{2L}\sum_{l}\sum_{a} \gamma_{ilak}$
-        '\foreach locus $l$'
-            '\foreach allele type $j$'
-                $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
-  \end{lstlisting}
-\end{algorithm}
+  \begin{algorithm}
+    \caption{Admixture model: EM}
+    \label{alg:em-nam}
+    \begin{lstlisting}[mathescape,escapeinside='']
+  
+      '\textbf{E step}'
+  
+      '\foreach individual $i$'
+          '\foreach locus $l$'
+              '\foreach chromosome $a$'
+                  '\foreach group $k$'
+                      $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+                  'Normalise the distribution $\gamma_{ila\cdot}$'
+  
+      '\textbf{M step}'
+  
+      '\foreach group $k$'
+          '\foreach individual $i$'
+              $Q_{ik} \gets \frac{1}{2L}\sum_{l}\sum_{a} \gamma_{ilak}$
+          '\foreach locus $l$'
+              '\foreach allele type $j$'
+                  $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
+    \end{lstlisting}
+  \end{algorithm}
 #+end_latex
 
 *** VB
@@ -490,7 +495,7 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
                 \exp\Big\{
                 \digamma\Big(\lambda^{(1)}_{ik}\Big) -
                 \digamma\Big(\sum_{k'=1}^K\lambda^{(1)}_{ik'}\Big) +
-                \digamma\Big(\alpha^{(1)}_{klx_{lia}}\Big) -
+                \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big) -
                 \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
                 \Big\}$
                  'Normalise the distribution $\gamma_{ila\cdot}$'
@@ -568,6 +573,33 @@ $q(\mu)$ in the correlated frequencies model differs only in that the
 'prior counts' of the number of copies of allele $j$ observed in
 population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
 ** Parallel algorithms
+#+begin_latex
+  \begin{algorithm}
+    \caption{Admixture model: EM: Parallel}
+    \label{alg:em-nam-pl}
+    \begin{lstlisting}[mathescape,escapeinside='']
+  
+      '\textbf{E step}'
+  
+      '\foreach individual $i$'
+          '\foreach locus $l$'
+              '\foreach chromosome $a$'
+                  '\foreach group $k$'
+                      $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+                  'Normalise the distribution $\gamma_{ila\cdot}$'
+  
+      '\textbf{M step}'
+  
+      '\foreach group $k$'
+          '\foreach individual $i$'
+              $Q_{ik} \gets \frac{1}{2L}\sum_{l}\sum_{a} \gamma_{ilak}$
+          '\foreach locus $l$'
+              '\foreach allele type $j$'
+                  $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
+    \end{lstlisting}
+  \end{algorithm}
+#+end_latex
+   
 * Results
 :PROPERTIES:
 :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
@@ -1050,20 +1082,20 @@ BIBTEX = bibtex
 
 
 $(AUX): 
-$(LATEX) $(BASE) > /dev/null
+	$(LATEX) $(BASE) > /dev/null
 
 $(BIB): $(AUX)
-bibtex $(BASE)
+	bibtex $(BASE)
 
 pdf: 	$(BIB)
-make clean
-$(LATEX) $(BASE) > /dev/null
-bibtex $(BASE)
-$(LATEX) $(BASE) > /dev/null
-$(LATEX) $(BASE) > /dev/null
+	make clean
+	$(LATEX) $(BASE) > /dev/null
+	bibtex $(BASE)
+	$(LATEX) $(BASE) > /dev/null
+	$(LATEX) $(BASE) > /dev/null
 
 clean:
-rm -f $(AUX) $(BBL) $(JUNK)
+	rm -f $(AUX) $(BBL) $(JUNK)
 #+end_src
 
 ** emvbpl.sty
