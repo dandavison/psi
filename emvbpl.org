@@ -404,6 +404,34 @@ $q(z)$. Computation of these four terms is described in Appendix
 In the Admixture model, the unobserved quantities are \Z, \Q and
 \P. 
 *** EM
+#+begin_latex
+\begin{algorithm}
+  \caption{Admixture model: EM}
+  \label{alg:em-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach locus $l$'
+            '\foreach chromosome $a$'
+                '\foreach group $k$'
+                    $\gamma_{ilak} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+                '\foreach group $k$'
+                    $\gamma_{ilak} \gets \gamma_{ilak} / \sum_{k'} \gamma_{ilak'}$
+
+    '\textbf{M step}'
+
+    '\foreach group $k$'
+        '\foreach individual $i$'
+            $Q_{ik} \gets \frac{1}{2L}\sum_{l}\sum_{a} \gamma_{ilak}$
+        '\foreach locus $l$'
+            '\foreach allele type $j$'
+                $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
 *** VB
 
 
