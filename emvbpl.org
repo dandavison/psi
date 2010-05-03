@@ -447,30 +447,63 @@ independently for all \l, \k.
 
 Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
 
+#+begin_latex
+\begin{algorithm}
+  \caption{Admixture model: VB (Overview)}
+  \label{alg:em-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
 
-*** E step
-Using the current distribution $q(\theta)$, set $q(z)$ proportional to
+    '\textbf{E step}'
 
-$\exp\left\{\E_{q(\theta)} \log p(z,x|\theta)\right\}$.
+    '\foreach individual $i$'
+        '\foreach locus $l$'
+            '\foreach chromosome $a$'
+                '\foreach group $k$'
+                    $\gamma_{ilak} \gets \exp\left\{\E_{q(P,Q)} \log \Pr(Z_{ila}=k,X_{ila}|P,Q)\right\}$
+                'Normalise the distribution $\gamma_{ila\cdot}$'
 
-Since
+    '\textbf{M step}'
 
-$p(z,x|\theta) = \prod_{i} \prod_{l} \prod_{a=1}^{2}p(z_{ila},x_{ila}|\theta)$
-
-this is done independently for each $(i,l,a)$, and the E step
-comprises the following algorithm:
+    '\foreach individual $i$'
+        $q(Q_{i\cdot}) \propto \Pr(Q_{i\cdot})\exp\left\{\E_{q(Z)} \log \Pr(Z|Q_i)\right\}$
+    '\foreach group $k$'
+        '\foreach locus $l$'
+            $q(P_{lk\cdot}) \propto \Pr(P_{lk\cdot})\exp\left\{\E_{q(Z)} \log p(X|\P_{lk\cdot},Z)\right\}$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
 
 #+begin_latex
-\begin{itemize}
-\item For each $(i,l,a)$
-  \begin{itemize}
-  \item For each $k$
-    \begin{itemize}
-    \item compute $\gamma^{ila}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\theta)\right\}$
-    \end{itemize}
-  \item renormalise the $\gamma^{ila}_{\cdot}$
-  \end{itemize}
-\end{itemize}
+\begin{algorithm}
+  \caption{Admixture model: VB (Explicit)}
+  \label{alg:em-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach locus $l$'
+            '\foreach chromosome $a$'
+                '\foreach group $k$'
+                    $\gamma_{ilak} \gets
+                \exp\Big\{
+                \digamma\Big(\lambda^{1}_{ik}\Big) -
+                \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) +
+                \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) -
+                \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big)
+                \Big\}$
+                 'Normalise the distribution $\gamma_{ila\cdot}$'
+
+    '\textbf{M step}'
+
+    '\foreach group $k$'
+        '\foreach individual $i$'
+            $\lambda^{(1)}_{ik} \leftarrow \lambda^{(0)}_{ik} + \sum_{l} \sum_{a=1}^{2} \gamma_{ilak}$
+        '\foreach locus $l$'
+            '\foreach allele type $j$'
+                $\alpha^{(1)}_{lkj} \leftarrow \alpha^{(0)}_{lkj} + \sum_{i} \sum_{a}\gamma_{ilak}I(X_{ila}=j)$
+  \end{lstlisting}
+\end{algorithm}
 #+end_latex
 
 In Appendix \ref{sec:appendix-am-E} it is shown that
