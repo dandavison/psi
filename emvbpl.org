@@ -241,7 +241,8 @@ integer-valued Z from the real-valued \phi=
 :PROPERTIES:
 :ID:       5e73e48a-3c1d-401a-85d4-af55e59c8dde
 :END:
-#+latex: \label{sec:model-fitting}
+\label{sec:model-fitting}
+** General comments
 \citet{Pritchard_et_al_2000} and \citet{Falush_et_al_2003} described
 how to fit the above models using MCMC. In this section I describe
 how to fit these models using Variational Bayes (VB).
@@ -400,10 +401,14 @@ each iteration. Since $q()$ factorises by assumption/definition,
 where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of
 $q(z)$. Computation of these four terms is described in Appendix
 \ref{sec:appendix-nam-convergence} .
-
 ** Admixture model
 In the Admixture model, the unobserved quantities are \Z, \Q and
-\P. As in the No Admixture model, we specify that approximate
+\P. 
+*** EM
+*** VB
+
+
+As in the No Admixture model, we specify that approximate
 posterior density $q(Z,Q,P)$ can be factorised as $q(Z)q(Q)q(P)$ and
 that each of these three components has the same parameteric form as
 in the prior, differing only in the hyperparameters. Specifically, we
@@ -413,9 +418,8 @@ Admixture model, that $q(P_{lk\cdot}) is
 Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
 independently for all \l, \k.
 
-\begin{itemize}
-\item Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
-\end{itemize}
+Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
+
 
 *** E step
 Using the current distribution $q(\theta)$, set $q(z)$ proportional to
@@ -1036,7 +1040,6 @@ rm -f $(AUX) $(BBL) $(JUNK)
 \bibpunct{(}{)}{,}{a}{}{,}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{newalg}
 \usepackage{listings}
 \usepackage{mathrsfs}
 \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
