@@ -117,20 +117,20 @@ with hyperparameters \alpha^{(0)}, independently across loci and
 groups. The following algorithm simulates a data set from this model.
 
 #+begin_latex
-\begin{algorithm}{No Admixture Model: Simulation}{n,L,K,\pi,\alpha}
-  \begin{FOR}{i \= 1 \TO n}
-    Z_i \sim \pi
-  \end{FOR}\\
-  \begin{FOR}{l \= 1 \TO L}
-    \begin{FOR}{k \= 1 \TO K}
-      P_{lk} \sim Dirichlet(\alpha)
-    \end{FOR}\\
-    \begin{FOR}{i \= 1 \TO n}
-      \begin{FOR}{a \= 1 \TO 2}
-        X_{ila} \sim P_{lZ_i}
-      \end{FOR}\\
-    \end{FOR}\\
-  \end{FOR}\\
+\begin{algorithm}
+\caption{No Admixture Model}
+\begin{lstlisting}[mathescape,escapeinside='']
+'\foreach individual' $i$:
+    $Z_i \sim \pi$
+
+'\foreach locus' $l$:
+    '\foreach group' $k$:
+        $P_{lk} \sim \Dirichlet(\alpha)$
+
+    '\foreach individual' $i$:
+        '\foreach chromosome' $a$:
+            $X_{ila} \sim P_{lZ_i}$
+\end{lstlisting}
 \end{algorithm}
 #+end_latex
 
@@ -155,35 +155,21 @@ algorithm simulates a data set from the Admixture Model model.
 
 =FIXME: \pi or \lambda?=
 
-#+begin_src python
-for each individual i:
-    Q_i \sim Dirichlet(\pi)
-
-for each locus l:
-    for each group k:
-        P_lk \sim Dirichlet(\alpha^{(0)})
-for each individual i:
-    for each chromosome a:
-        Z_ila \sim Q_i
-        X_ila \sim P_{l Z_{ila}}
-#+end_src
-        
 #+begin_latex
-\begin{algorithm}{Admixture Model: Simulation}{n,K,L,\pi,\alpha^{(0)}}
-  \begin{FOR}{i \= 1 \TO n}
-    Q_i \sim Dirichlet(\pi)
-  \end{FOR}\\
-  \begin{FOR}{l \= 1 \TO L}
-    \begin{FOR}{k \= 1 \TO K}
-      P_{lk} \sim Dirichlet(\alpha^{(0)})
-    \end{FOR}\\   
-    \begin{FOR}{i \= 1 \TO n}
-      \begin{FOR}{a \= 1 \TO 2}
-        Z_{ila} \sim Q_i\\
-        X_{ila} \sim P_{l Z_{ila}}
-      \end{FOR}\\
-    \end{FOR}\\                         
-  \end{FOR}\\                           
+\begin{algorithm}
+  \caption{Admixture Model}
+  \begin{lstlisting}[mathescape,escapeinside='']
+'\foreach individual' $i$:
+    $Q_i \sim \Dirichlet(\pi)$
+
+'\foreach locus' $l$:
+    '\foreach group' $k$:
+        $P_{lk} \sim \Dirichlet(\alpha^{(0)})$
+    '\foreach individual' $i$:
+        '\foreach chromosome' $a$:
+            $Z_{ila} \sim Q_i$
+            $X_{ila} \sim P_{l Z_{ila}}$
+  \end{lstlisting}
 \end{algorithm}
 #+end_latex
 
@@ -217,7 +203,11 @@ where $q^*(\phi)$ denotes the (unknown) true posterior density of
 parameters \phi and $p(\phi,X)$ is the complete data likelihood (for
 the purposes of this section, \phi includes the integer-valued
 membership indicators \Z, as well as the real-valued parameters \P and
-\Q). Taking logs and integrating with respect to some distribution
+\Q).
+
+[taking logs and integrating with respect to \phi, this can be written as...]
+
+ Taking logs and integrating with respect to some distribution
 $q(\phi)$ (this will be the approximate posterior density, and in
 practice it will be chosen to have a convenient parametric form) gives
 
@@ -290,11 +280,42 @@ following form:
  
 ** No Admixture model
 In this case the parameters are P (allele frequencies) and $\pi$
-(cluster intensities). We specify that the approximate posterior
-density $q(Z,\pi,P)$ can be factorised as $q(Z)q(\pi)q(\mu)$ and that
-each of these three components has the same parametric form as the
-prior, differing only in the hyperparameters. In other words, we
-specify that q(\pi) is
+(cluster intensities). We start by considering the EM algorithm for
+fitting this model (Algorithm \ref{alg:em-nam}).
+
+*** EM algorithm
+#+begin_latex
+\begin{algorithm}
+  \caption{EM algorithm: No Admixture model}
+  \label{alg:em-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach group $k$'
+            $\gamma_i^k \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+        '\foreach group $k$'
+            $\gamma_i^k \gets \gamma_i^k / \sum_{k'} \gamma_i^{k'}$
+
+    '\textbf{M step}'
+
+    '\foreach group $k$'
+        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_i^k$
+        '\foreach locus $l$'
+            '\foreach allele type $j$'
+                $P_{lkj} \gets \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
+=FIXME: Monitoring convergence for EM=
+
+*** VB algorithm
+To fit the No Admixture model via VB, we specify that the approximate
+posterior density $q(Z,\pi,P)$ can be factorised as $q(Z)q(\pi)q(\mu)$
+and that each of these three components has the same parametric form
+as the prior, differing only in the hyperparameters. In other words,
+we specify that q(\pi) is
 Dirichlet(\lambda^{1}_{1},\ldots,\lambda^{1}_{K}), and that
 $q(P_{lk\cdot}) is
 Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
@@ -303,22 +324,65 @@ independently for all \l, \k.
 =FIXME: what are we saying about q(Z)=
 =FIXME: how is the notation going to differentiate among these different q distributions?=
 
-\begin{itemize}
-\item Let $\gamma^{i}_{k} = q(z_{i}=k)$
-\end{itemize}
+Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
-*** E Step
-**** EM
-***** Version 1
-For each $(i,k)$ compute
-#+begin_src latex
-\begin{align*}
-  \Pr(Z_{i} = k| X_i=x) &\propto \Pr(Z_{i}=k)\Pr(X_{i}=x|Z_{i}=k) \\
-  &= \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkx_{ila}}
-\end{align*}
-#+end_src
-**** VB
-***** Version 1
+
+#+begin_latex
+\begin{algorithm}
+  \caption{VB algorithm: No Admixture model (Overview)}
+  \label{alg:vb-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach group $k$'
+            $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
+        '\foreach group $k$'
+            $\gamma^i_k \gets \gamma^i_k / \sum_{k'} \gamma^i_{k'}$
+
+    '\textbf{M step}'
+
+    $q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$
+    '\foreach group $k$'
+        '\foreach locus $l$'
+             $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
+#+begin_latex
+\begin{algorithm}
+  \caption{VB algorithm: No Admixture model (Explicit)}
+  \label{alg:vb-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach group $k$'
+            $\gamma^{i}_{k} =
+        \exp \Big\{
+        \digamma\Big(\lambda^{1}_{k}\Big) -
+        \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) +
+        \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] -
+        2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big)
+        \Big\}$
+        '\foreach group $k$'
+            $\gamma^i_k \gets \gamma^i_k / \sum_{k'} \gamma^i_{k'}$
+
+    '\textbf{M step}'
+
+    $q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$
+    '\foreach group $k$'
+        '\foreach locus $l$'
+             $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
+**** E Step
+ *Version 1*
 #+begin_src latex
   for each $(i,k)$ compute 
   \[
@@ -328,7 +392,8 @@ For each $(i,k)$ compute
   I.e. compute the same quantity as in the EM algorithm, but
   log-averaged over the (current) posterior densities of P and
   \pi, rather than using (current) point estimates.
-***** Version 2
+
+ *Version 2*
 Using the current distribution $q(\theta)$, set
 
 $q(z) \propto \exp\left\{\E_{q(\theta)} \log p(z,x|\theta)\right\}$.
@@ -337,56 +402,20 @@ Since $p(z,x|\theta) = \prod_{i} p(z_{i},x_{i}|\theta)$ this is done
 independently for each $i$, and the E step comprises the following
 algorithm:
 
-1. For each \i
-   1. For each \k
-      - Compute $\gamma^{i}_{k} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
-   2. For each \k
-      - $\gamma^{i}_{k} \leftarrow $\gamma^{i}_{k} / \sum_{k'} $\gamma^{i}_{k'}
-
-#+begin_latex
-\begin{algorithm}{E step}{}
-  \begin{FOR}{i \= 1 \TO n}
-    \begin{FOR}{k \= 1 \TO K}
-      \gamma^{i}_{k} \leftarrow \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}
-    \end{FOR}\\
-    \begin{FOR}{k \= 1 \TO K}
-      \gamma^{i}_{k} \leftarrow \gamma^{i}_{k} / \sum_{k'} \gamma^{i}_{k'}
-    \end{FOR}\\
-  \end{FOR}\\
-\end{algorithm}
-#+end_latex
-
-
-
 It is shown in appendix \ref{sec:appendix-nam-E} that
 \begin{equation*}
 \log \gamma^{i}_{k} = \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) + \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] - 2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{equation*}
 where $\digamma$ is the digamma function.
-
-*** M step
-**** EM
-***** Version 1
-Use $\Pr(Z|X)$ to estimate $\mu$ and $\pi$ in the natural
-  way. I.e. the cluster intensities are estimated by
-#+begin_src latex
-\[
-\pi_{k} \leftarrow \frac{1}{n}\sum_{i}\Pr(Z_{i}=k),
-\]
-and the allele frequencies are estimated by
-\[
-P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
-\]
-#+end_src
-**** VB
-***** Version 1
+**** M step
+*Version 1*
 Use $\tilde \Pr(Z|X)$ to update the posterior densities of
 P and $\pi$. This turns out to be a standard dirichlet-multinomial
 update in which the hyperparameters of the posterior are the sum of
 `prior counts' and `expected counts', with the latter formed using the
 distribution $\tilde \Pr(Z|X)$.
 
-***** Version 2
+*Version 2*
 
 Using the current distribution $p(z)$, the M step comprises setting
 
@@ -409,7 +438,7 @@ q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}.
 \end{equation*}
 #+end_latex
 
-**** Updating the approximate posterior on mixing proportions
+***** Updating the approximate posterior on mixing proportions
 The hyperparameters of $q(\pi)$ are updated according to the following
 algorithm (appendix \ref{sec:appendix-nam-M-pi}):
 
@@ -432,7 +461,7 @@ algorithm (appendix \ref{sec:appendix-nam-M-pi}):
 %% \end{algorithmic}
 #+end_latex
 
-**** Updating the approximate posterior on allele frequencies
+***** Updating the approximate posterior on allele frequencies
 The hyperparameters of $q(\mu)$ are updated according to the following
 algorithm (see appendix \ref{sec:appendix-nam-M-P}):
 
@@ -450,7 +479,7 @@ For each locus $l$
 \end{itemize}
 #+end_latex
 
-*** Monitoring convergence
+**** Monitoring convergence
 
 The E and M steps are iterated until the increase in $F(q,p)$ is
 sufficiently small that convergence is judged to have been reached,
@@ -469,58 +498,6 @@ each iteration. Since $q()$ factorises by assumption/definition,
 where $H\(q(z)\) = -\int q(z)\log q(z) dz$ is the Shannon entropy of
 $q(z)$. Computation of these four terms is described in Appendix
 \ref{sec:appendix-nam-convergence} .
-*** EM algorithm
-#+begin_latex
-%% \begin{algorithm}{No Admixture: EM algorithm}{n,K,L,X}
-%%   \\\\
-%%   \text{E step}\\\\
-%%   \begin{FOR}{\EACH i \IN 1 \ldots n}
-%%     \begin{FOR}{\EACH k \IN 1 \ldots K}
-%%       \gamma_i^k = \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}
-%%     \end{FOR}
-%%   \end{FOR}
-%%   \\\\
-%%   \text{M step}\\\\
-%%   \begin{FOR}{\EACH k \IN 1 \ldots K}
-%%       \pi_{k} \leftarrow \frac{1}{n}\sum_{i} \gamma_i^k\\
-%%       \begin{FOR}{\EACH l \IN 1 \ldots L}
-%%         \begin{FOR}{\EACH j \IN 1 \ldots J_L}
-%%           P_{lkj} \leftarrow \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}
-%%         \end{FOR}
-%%       \end{FOR}
-%%   \end{FOR}
-%% \end{algorithm}
-
-%% \begin{lstlisting}[mathescape]
-%% for i = 1,...,n
-%%     x $\leftarrow e^{i\pi}$
-%% \end{lstlisting}
-#+end_latex
-
-#+begin_latex
-\begin{algorithm}
-  \caption{EM algorithm}
-  \label{EM algorithm}
-  \begin{lstlisting}[mathescape]
-
-    E step
-
-    for $i$ in $1, \ldots, n$
-        for $k$ in $1, \ldots, K$
-            $\gamma_i^k \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-
-    M step
-
-    for $k$ in $1 \ldots K$
-        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_i^k$
-        for $l$ in $1, \ldots, L$
-            for $j$ in $1,\ldots,J_L$
-                $P_{lkj} \gets \frac{\sum_{i,a}I(X_{ila}=j)\Pr(Z_{i}=k)}{\sum_{i,a}\Pr(Z_{i}=k)}$
-
-  \end{lstlisting}
-\end{algorithm}
-#+end_latex
-
 
 ** Admixture model
 In the Admixture model, the unobserved quantities are \Z, \Q and
@@ -1121,19 +1098,7 @@ Inference of population structure from large genotype data sets: variational Bay
 #+end_src
 
 #+results:
-| i | i | t |
-| j | j | t |
-| k | k | t |
-| K | K | t |
-| l | l | t |
-| n | n | t |
-| p | p | t |
-| P | P | t |
-| q | q | t |
-| Q | Q | t |
-| X | X | t |
-| Z | Z | t |
-: t
+|   | newalg | t |
 ** Makefile
 #+begin_src makefile :tangle Makefile :noweb no
 BASE = emvbpl
@@ -1188,8 +1153,12 @@ rm -f $(AUX) $(BBL) $(JUNK)
 \renewcommand*{\labelitemiv}{\labelitemi}
 
 \usepackage{float}
+\floatstyle{ruled}
 \newfloat{algorithm}{thp}{lop}
 \floatname{algorithm}{Algorithm}
+
+\newcommand{\foreach}{\textbf{for each }}
+\newcommand{\Dirichlet}{\text{Dirichlet}}
 #+end_src
 
 ** LaTeX headers
