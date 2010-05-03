@@ -286,7 +286,7 @@ fitting this model (Algorithm \ref{alg:em-nam}).
 *** EM algorithm
 #+begin_latex
 \begin{algorithm}
-  \caption{EM algorithm: No Admixture model}
+  \caption{No Admixture model: EM}
   \label{alg:em-nam}
   \begin{lstlisting}[mathescape,escapeinside='']
     '\textbf{E step}'
@@ -329,7 +329,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
 #+begin_latex
 \begin{algorithm}
-  \caption{VB algorithm: No Admixture model (Overview)}
+  \caption{No Admixture model: VB (Overview)}
   \label{alg:vb-nam}
   \begin{lstlisting}[mathescape,escapeinside='']
 
@@ -353,7 +353,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
 #+begin_latex
 \begin{algorithm}
-  \caption{VB algorithm: No Admixture model (Explicit)}
+  \caption{No Admixture model: VB (Explicit)}
   \label{alg:vb-nam}
   \begin{lstlisting}[mathescape,escapeinside='']
 
