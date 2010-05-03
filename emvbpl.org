@@ -294,8 +294,7 @@ fitting this model (Algorithm \ref{alg:em-nam}).
     '\foreach individual $i$'
         '\foreach group $k$'
             $\gamma_{ik} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-        '\foreach group $k$'
-            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
+        'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
 
@@ -338,8 +337,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
     '\foreach individual $i$'
         '\foreach group $k$'
             $\gamma_{ik} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
-        '\foreach group $k$'
-            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
+        'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
 
@@ -368,8 +366,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
         \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big)\right] -
         2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
         \Big\}$
-        '\foreach group $k$'
-            $\gamma_{ik} \gets \gamma_{ik} / \sum_{k'} \gamma_{ik'}$
+        'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
 
@@ -417,8 +414,7 @@ In the Admixture model, the unobserved quantities are \Z, \Q and
             '\foreach chromosome $a$'
                 '\foreach group $k$'
                     $\gamma_{ilak} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-                '\foreach group $k$'
-                    $\gamma_{ilak} \gets \gamma_{ilak} / \sum_{k'} \gamma_{ilak'}$
+                'Normalise the distribution $\gamma_{ila\cdot}$'
 
     '\textbf{M step}'
 
