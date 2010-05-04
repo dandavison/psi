@@ -73,7 +73,6 @@ paper.
 | $P_{lk}$             | Allele frequencies at locus l in group k                                                                    |
 | $\alpha_j^{(0)}$     | Hyperparameter of Dirichlet prior on allele frequencies (same for all l, k)                                 |
 | $\alpha_{lkj}^{(1)}$ | Hyperparameter of Dirichlet posterior on allele frequencies at locus l in group k                           |
-| $\digamma$           | The digamma function                                                                                        |
 | $~$                  |                                                                                                             |
 |                      |                                                                                                             |
 | No Admixture Model   |                                                                                                             |
@@ -90,6 +89,13 @@ paper.
 | $\lambda_k^{(0)}$    | Hyperparameter of Dirichlet prior on ancestry proportions (same for all i)                                  |
 | $\lambda_{ik}^{(1)}$ | Hyperparameter of Dirichlet posterior on ancestry proportions for individual i                              |
 | $\gamma_{ilak}$      | Posterior probability that the allele on chromosome a at locus l in individual i was generated from group k |
+| $~$                  |                                                                                                             |
+|                      |                                                                                                             |
+|----------------------+-------------------------------------------------------------------------------------------------------------|
+| $\sim$               | Draw value from probability distribution                                                                    |
+| $\gets$              | Assign value                                                                                                |
+| $\getsp$             | Assign value requiring subsequent normalisation of discrete probability distribution                        |
+| $\digamma$           | The digamma function                                                                                        |
 
 * Models
 :PROPERTIES:
@@ -308,8 +314,7 @@ fitting this model (Algorithm \ref{alg:em-nam}).
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} \gets Q_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-        'Normalise the distribution $\gamma_{i\cdot}$'
+            $\gamma_{ik} \getsp Q_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
 
     '\textbf{M step}'
 
@@ -350,8 +355,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} \gets \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
-        'Normalise the distribution $\gamma_{i\cdot}$'
+            $\gamma_{ik} \getsp \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
 
     '\textbf{M step}'
 
@@ -373,14 +377,13 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} \gets
+            $\gamma_{ik} \getsp
         \exp \Big\{
         \digamma\Big(\lambda^{(1)}_{k}\Big) -
         \digamma\Big(\sum_{k'}\lambda^{(1)}_{k'}\Big) +
         \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big)\right] -
         2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
         \Big\}$
-        'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
 
@@ -428,8 +431,7 @@ In the Admixture model, the unobserved quantities are \Z, \Q and
           '\foreach locus $l$'
               '\foreach chromosome $a$'
                   '\foreach group $k$'
-                      $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-                  'Normalise the distribution $\gamma_{ila\cdot}$'
+                      $\gamma_{ilak} \getsp Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
   
       '\textbf{M step}'
   
@@ -468,8 +470,7 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
         '\foreach locus $l$'
             '\foreach chromosome $a$'
                 '\foreach group $k$'
-                    $\gamma_{ilak} \gets \exp\left\{\E_{q(P,Q)} \log \Pr(Z_{ila}=k,X_{ila}|P,Q)\right\}$
-                'Normalise the distribution $\gamma_{ila\cdot}$'
+                    $\gamma_{ilak} \getsp \exp\left\{\E_{q(P,Q)} \log \Pr(Z_{ila}=k,X_{ila}|P,Q)\right\}$
 
     '\textbf{M step}'
 
@@ -494,14 +495,13 @@ Let $\gamma^{ila}_{k} = q(z_{ila}=k)$
         '\foreach locus $l$'
             '\foreach chromosome $a$'
                 '\foreach group $k$'
-                    $\gamma_{ilak} \gets
+                    $\gamma_{ilak} \getsp
                 \exp\Big\{
                 \digamma\Big(\lambda^{(1)}_{ik}\Big) -
                 \digamma\Big(\sum_{k'=1}^K\lambda^{(1)}_{ik'}\Big) +
                 \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big) -
                 \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
                 \Big\}$
-                 'Normalise the distribution $\gamma_{ila\cdot}$'
 
     '\textbf{M step}'
 
@@ -604,8 +604,7 @@ often exceeds \p, the number of processes.
               '\foreach locus $l \in \L_c$'
                   '\foreach chromosome $a$'
                       '\foreach group $k$'
-                          $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-                      'Normalise the distribution $\gamma_{ila\cdot}$'
+                          $\gamma_{ilak} \getsp Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
       
           '\textbf{M step}'
       
