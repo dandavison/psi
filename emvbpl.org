@@ -262,36 +262,24 @@ integer-valued $Z$ from the real-valued $\phi$}
 how to fit the above models using MCMC. In this section I describe how
 to fit these models using Variational Bayes (VB). The VB algorithms
 bear a strong similarity to Expectation-Maximization (EM) algorithms,
-having the following form:
+and a simple heuristic descriprion is as follows.
 
 1. Set parameters (EM) / hyperparameters (VB) to their initial values.
-2. E step
-3. M step
+2. \textbf{E step} Compute the discrete probability distribution \Pr(Z|X)
+   on the unknown cluster indicators, using the current parameter
+   estimates.
+3. \textbf{M step} Use the current distribution \Pr(Z|X) to update the parameter
+   estimates.
 4. Stop if converged, otherwise go to (2).
 
-In the following sections I focus on the E step, the M step and
-assessing convergence.
-
-A simple heuristic description is that both methods work by iterating
-the following steps:
-
-\paragraph{E step}
-Compute the discrete probability distribution \Pr(Z|X)
-on the unknown cluster indicators, using the current parameter
-estimates.
-
-\paragraph{M step}
-Use the current distribution \Pr(Z|X) to update the parameter
-estimates.
-
-\paragraph{}
-In EM, the E step is accomplished straightforwardly using Bayes rule
-and current point estimates of the parameters P and Q. In contrast, in
-VB the term "parameters" in the above refers to hyperparameters
-\alpha^{(1)} and \lambda^{(1)} of the posterior density, and the E
-step is accomplished by averaging over the current posterior densities
-for \P and \Q. \citet{Somepeople} show that this is achieved by the
-following update scheme:
+In the following sections I describe the E step, the M step and how to
+assess convergence. In EM, the E step is accomplished
+straightforwardly using Bayes rule and current point estimates of the
+parameters P and Q. In contrast, in VB the "parameters" are
+hyperparameters \alpha^{(1)} and \lambda^{(1)} of the posterior
+density, and the E step is accomplished by averaging over the current
+posterior densities for \P and \Q. \citet{Somepeople} show that this
+is achieved by the following update scheme:
 
 \paragraph{E Step}
    Set $q(Z) \propto \exp\left\{\E_{q(\phi)} \log p(Z,X|\phi)\right\}$
