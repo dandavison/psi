@@ -596,24 +596,30 @@ often exceeds \p, the number of processes.
     \label{alg:em-nam-pl}
     \begin{lstlisting}[mathescape,escapeinside='']
   
-      '\textbf{E step}'
-  
-      '\foreach individual $i$'
-          '\foreach locus $l$'
-              '\foreach chromosome $a$'
-                  '\foreach group $k$'
-                      $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
-                  'Normalise the distribution $\gamma_{ila\cdot}$'
-  
-      '\textbf{M step}'
-  
-      '\foreach group $k$'
+      '\pforeach{process $c$}'
+
+          '\textbf{E step}'
+      
           '\foreach individual $i$'
-              $Q_{ik} \gets \frac{1}{2L}\sum_{l}\sum_{a} \gamma_{ilak}$
-          '\foreach locus $l$'
-              '\foreach allele type $j$'
-                  $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
-    \end{lstlisting}
+              '\foreach locus $l \in \L_c$'
+                  '\foreach chromosome $a$'
+                      '\foreach group $k$'
+                          $\gamma_{ilak} \gets Q_{ik}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+                      'Normalise the distribution $\gamma_{ila\cdot}$'
+      
+          '\textbf{M step}'
+      
+          '\foreach group $k$'
+              '\foreach individual $i$'
+                  $Q^{(c)}_{ik} \gets \frac{1}{2L_p}\sum_{l=1}^{L_p}\sum_{a=1}^2 \gamma_{ilak}$
+              '\foreach locus $l \in \L_c$'
+                  '\foreach allele type $j$'
+                      $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ilak}}{\sum_i\sum_a\gamma_{ilak}}$
+      
+      '\foreach individual $i$'
+          '\foreach group $k$'
+              $Q_{ik} \gets \sum_{c=1}^C \frac{L_cQ^{(c)}_{ik}}{L}$
+        \end{lstlisting}
   \end{algorithm}
 #+end_latex
    
@@ -1121,6 +1127,7 @@ clean:
 \bibpunct{(}{)}{,}{a}{}{,}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{txfonts}
 \usepackage{listings}
 \usepackage{mathrsfs}
 \usepackage{color}
@@ -1145,9 +1152,12 @@ clean:
 \floatname{algorithm}{Algorithm}
 
 \newcommand{\foreach}{\textbf{for each }}
+\newcommand{\pforeach}[1]{\textbf{for each }#1 \textbf{ in parallel}}
 \newcommand{\Dirichlet}{\text{Dirichlet}}
 
 \newcommand{\fixme}[1]{\footnote{\textcolor{red}{\textbf{FIXME} #1}}}
+
+\newcommand{\getsp}{\leftsquigarrow}
 #+end_src
 
 ** LaTeX headers
