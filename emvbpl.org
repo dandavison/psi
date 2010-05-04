@@ -128,19 +128,21 @@ simulates a data set from this model.
 \begin{algorithm}
 \caption{No Admixture Model}
 \begin{lstlisting}[mathescape,escapeinside='']
-'\foreach individual' $i$:
+'\foreach individual' $i$
     $Z_i \sim Q$
 
-'\foreach locus' $l$:
-    '\foreach group' $k$:
-        $P_{lk} \sim \Dirichlet(\alpha)$
+'\foreach locus' $l$
+    '\foreach group' $k$
+        $P_{lk} \sim \Dirichlet(\alpha^{(0)})$
 
-    '\foreach individual' $i$:
-        '\foreach chromosome' $a$:
+    '\foreach individual' $i$
+        '\foreach chromosome' $a$
             $X_{ila} \sim P_{lZ_i}$
 \end{lstlisting}
 \end{algorithm}
 #+end_latex
+
+\fixme{Why is $Q$ a prior probability distribution in NAM, but something drawn from a Dirichlet prior in AM?}
 
 See PSD for further details.
 
@@ -165,14 +167,15 @@ algorithm simulates a data set from the Admixture Model model.
 \begin{algorithm}
   \caption{Admixture Model}
   \begin{lstlisting}[mathescape,escapeinside='']
-'\foreach individual' $i$:
+'\foreach individual' $i$
     $Q_i \sim \Dirichlet(\lambda^{(0)})$
 
-'\foreach locus' $l$:
-    '\foreach group' $k$:
+'\foreach locus' $l$
+    '\foreach group' $k$
         $P_{lk} \sim \Dirichlet(\alpha^{(0)})$
-    '\foreach individual' $i$:
-        '\foreach chromosome' $a$:
+
+    '\foreach individual' $i$
+        '\foreach chromosome' $a$
             $Z_{ila} \sim Q_i$
             $X_{ila} \sim P_{l Z_{ila}}$
   \end{lstlisting}
@@ -347,7 +350,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} = \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
+            $\gamma_{ik} \gets \exp\left\{\E_{q(\theta)} \log p(z_{i}=k,x_{i}|\theta)\right\}$
         'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
@@ -370,7 +373,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} =
+            $\gamma_{ik} \gets
         \exp \Big\{
         \digamma\Big(\lambda^{(1)}_{k}\Big) -
         \digamma\Big(\sum_{k'}\lambda^{(1)}_{k'}\Big) +
