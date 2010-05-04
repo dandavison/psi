@@ -1126,7 +1126,7 @@ clean:
 \bibpunct{(}{)}{,}{a}{}{,}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{txfonts}
+%\usepackage{txfonts}
 \usepackage{listings}
 \usepackage{mathrsfs}
 \usepackage{color}
@@ -1156,6 +1156,7 @@ clean:
 
 \newcommand{\fixme}[1]{\footnote{\textcolor{red}{\textbf{FIXME} #1}}}
 
+\newcommand\leftsquigarrow{\reflectbox{\ensuremath{\rightsquigarrow}}}
 \newcommand{\getsp}{\leftsquigarrow}
 #+end_src
 
