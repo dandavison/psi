@@ -79,7 +79,7 @@ paper.
 | No Admixture Model   |                                                                                                             |
 |----------------------+-------------------------------------------------------------------------------------------------------------|
 | Z_i                  | Unknown group label for individual i: Z_i \in {1,\ldots,K}                                                  |
-| $\pi_k$              | Intensity of group k in the mixture                                                                         |
+| $Q_k$                | Intensity of group k in the mixture                                                                         |
 | $\gamma_{ik}$        | Posterior probability that individual $i$ was generated from group $k$                                      |
 | $~$                  |                                                                                                             |
 |                      |                                                                                                             |
@@ -129,7 +129,7 @@ simulates a data set from this model.
 \caption{No Admixture Model}
 \begin{lstlisting}[mathescape,escapeinside='']
 '\foreach individual' $i$:
-    $Z_i \sim \pi$
+    $Z_i \sim Q$
 
 '\foreach locus' $l$:
     '\foreach group' $k$:
@@ -292,7 +292,7 @@ following update scheme:
 \fixme{Not going to discuss Gibbs sampler algorithm at all?}   
 
 ** No Admixture model
-In this case the parameters are P (allele frequencies) and $\pi$
+In this case the parameters are \P (allele frequencies) and \Q
 (cluster intensities). We start by considering the EM algorithm for
 fitting this model (Algorithm \ref{alg:em-nam}).
 *** EM algorithm
@@ -305,13 +305,13 @@ fitting this model (Algorithm \ref{alg:em-nam}).
 
     '\foreach individual $i$'
         '\foreach group $k$'
-            $\gamma_{ik} \gets \pi_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
+            $\gamma_{ik} \gets Q_{k}\prod_{l}\prod_{a=1}^{2}P_{lkX_{ila}}$
         'Normalise the distribution $\gamma_{i\cdot}$'
 
     '\textbf{M step}'
 
     '\foreach group $k$'
-        $\pi_{k} \gets \frac{1}{n}\sum_{i} \gamma_{ik}$
+        $Q_{k} \gets \frac{1}{n}\sum_{i} \gamma_{ik}$
         '\foreach locus $l$'
             '\foreach allele type $j$'
                 $P_{lkj} \gets \frac{\sum_i\sum_aI(X_{ila}=j)\gamma_{ik}}{\sum_i\sum_a\gamma_{ik}}$
@@ -323,10 +323,10 @@ fitting this model (Algorithm \ref{alg:em-nam}).
 
 *** VB algorithm
 To fit the No Admixture model via VB, we specify that the approximate
-posterior density $q(Z,\pi,P)$ can be factorised as $q(Z)q(\pi)q(\mu)$
+posterior density $q(Z,Q,P)$ can be factorised as $q(Z)q(Q)q(P)$
 and that each of these three components has the same parametric form
 as the prior, differing only in the hyperparameters. In other words,
-we specify that $q(\pi)$ is
+we specify that $q(Q)$ is
 $\Dirichlet(\lambda^{1}_{1},\ldots,\lambda^{1}_{K})$, and that
 $q(P_{lk\cdot})$ is
 $\Dirichlet(\alpha^{1}_{lk1},\ldots,\alpha^{1}_{lkJ_{l}})$,
@@ -352,7 +352,7 @@ Let $\gamma^{i}_{k} = q(z_{i}=k)$
 
     '\textbf{M step}'
 
-    $q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$
+    $q(Q) \propto p(Q)\exp\left\{\E_{q(Z)} \log p(Z|Q)\right\}$
     '\foreach group $k$'
         '\foreach locus $l$'
              $q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}$
@@ -402,7 +402,7 @@ each iteration. Since $q()$ factorises by assumption/definition,
   F(q,p) 
   &=~ \int q(\theta)q(z)\log \frac{p(\theta)p(z,x|\theta)}{q(\theta)q(z)} d\theta dz\\
   &=~ \int q(\theta)\log \frac{p(\theta)}{q(\theta)} d\theta + \int q(\theta)q(z)\log \frac{p(z,x|\theta)}{q(z)} d\theta dz\\
-  &=~ -d_{KL}(q||p) + \E_{q(\pi,z)}\log p(z|\pi) + \E_{q(\mu,z)} \log p(x|z,\mu) + H\(q(z)\),\\
+  &=~ -d_{KL}(q||p) + \E_{q(Q,z)}\log p(z|Q) + \E_{q(\mu,z)} \log p(x|z,\mu) + H\(q(z)\),\\
 \end{align*}
 #+end_latex
 
@@ -526,24 +526,24 @@ $q(\theta)$ proportional to
 \begin{eqnarray*}
   p(\theta)\exp\left\{\E_{q(z)} \log p(z,x|\theta)\right\} \\
   &=& 
-  p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} \times 
+  p(Q)\exp\left\{\E_{q(Z)} \log p(Z|Q)\right\} \times 
   p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\},
 \end{eqnarray*}
 
 
-and so the updates for $q(\pi)$ and $q(\mu)$ can be performed
+and so the updates for $q(Q)$ and $q(\mu)$ can be performed
 separately, by setting
 
 
 \begin{equation*}
-  q(\pi) \propto p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}
+  q(Q) \propto p(Q)\exp\left\{\E_{q(z)} \log p(z|Q)\right\}
   \text{~~~~and~~~~}
   q(\mu) \propto p(\mu)\exp\left\{\E_{q(z)} \log p(x|\mu,z)\right\}.
 \end{equation*}
 
 **** Updating the approximate posterior on admixture proportions
-The hyperparameters of $q(\pi)$ are updated according to the following
-algorithm (see Appendix \ref{sec:appendix-am-M-pi}):
+The hyperparameters of $q(Q)$ are updated according to the following
+algorithm (see Appendix \ref{sec:appendix-am-M-Q}):
 
 **** Updating the approximate posterior on allele frequencies
 The hyperparameters of $q(\mu)$ are updated according to the following
@@ -556,7 +556,7 @@ Since $q()$ factorises by definition,
   F(q,p) 
   &=~ \int q(\theta)q(z)\log \frac{p(\theta)p(z,x|\theta)}{q(\theta)q(z)} d\theta dz\\
   &=~ \int q(\theta)\log \frac{p(\theta)}{q(\theta)} d\theta + \int q(\theta)q(z)\log \frac{p(z,x|\theta)}{q(z)} d\theta dz\\
-  &=~ -d_{KL}(q||p) + \E_{q(\pi,z)}\log p(z|\pi) + \E_{q(\mu,z)} \log p(x|z,\mu) + H\(q(z)\),\\
+  &=~ -d_{KL}(q||p) + \E_{q(Q,z)}\log p(z|Q) + \E_{q(\mu,z)} \log p(x|z,\mu) + H\(q(z)\),\\
 \end{align*}
 #+end_latex
 
@@ -567,7 +567,7 @@ $q(z)$. Computation of these four terms is described in Appendix
 ** Admixture model with correlated allele frequencies
 The correlated frequencies model affects how we update $q(\mu)$. The E
 step is unchanged, as this involves estimating $q(z)$ given the
-current $q(\mu,\pi)$. In the M step, the update of $q(\pi)$ is also
+current $q(\mu,Q)$. In the M step, the update of $q(Q)$ is also
 unchanged, as this doesn't involve $\mu$. I think the update of
 $q(\mu)$ in the correlated frequencies model differs only in that the
 'prior counts' of the number of copies of allele $j$ observed in
@@ -642,20 +642,20 @@ The complete-data log likelihood is
 
 \begin{eqnarray*}
 \log p(z_{i}=k,x_{i}|\theta) 
-&=& \log \pi_{k} + \sum_{l}\sum_{a=1}^{2}\log p(x_{ila}|\mu_{kl\cdot}) \\
-&=& \log \pi_{k} + \sum_{l}\sum_{a=1}^{2} \log \mu_{klx_{ila}},
+&=& \log Q_{k} + \sum_{l}\sum_{a=1}^{2}\log p(x_{ila}|\mu_{kl\cdot}) \\
+&=& \log Q_{k} + \sum_{l}\sum_{a=1}^{2} \log \mu_{klx_{ila}},
 \end{eqnarray*}
 
 so we need to evaluate integrals of the form
 
-$\int q(\pi) \log \pi_{k} d\pi$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
+$\int q(Q) \log Q_{k} dQ$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
 
-Since the distributions $q(\pi)$ and $q(\mu_{kl\cdot})$ are both
+Since the distributions $q(Q)$ and $q(\mu_{kl\cdot})$ are both
 Dirichlet, these have the same form. The first is
 
 \begin{eqnarray*}
-\int q(\pi) \log \pi_{k} d\pi 
-&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{k'}\Big)}\prod_{k}\pi_{k}^{\lambda^{1}_{k}-1}\right] \log \pi_{k} d\pi \\
+\int q(Q) \log Q_{k} dQ
+&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{k'}\Big)}\prod_{k}Q_{k}^{\lambda^{1}_{k}-1}\right] \log Q_{k} dQ \\
 &=& \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big),
 \end{eqnarray*}
 where $\digamma$ is the digamma function, and the second one is
@@ -669,25 +669,25 @@ The expectation that we are trying to evaluate is then
 \begin{eqnarray*}
 \log \gamma^{i}_{k} 
 &=& \E_{q(\theta)}\log p(z_{i}=k,x_{i}|\theta) \\
-&=& \int q(\pi) \log \pi_{k} d\pi + \sum_{l}\sum_{a=1}^{2}\int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
+&=& \int q(Q) \log Q_{k} dQ + \sum_{l}\sum_{a=1}^{2}\int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
 &=& \digamma\Big(\lambda^{1}_{k}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{k'}\Big) + \sum_{l} \left[\sum_{a=1}^{2} \digamma\Big(\alpha^{1}_{klx_{lia}}\Big)\right] - 2\digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{eqnarray*}
 
 **** M step
-***** Updating the hyperparameters of $q(\pi)$
-\label{sec:appendix-nam-M-pi}
+***** Updating the hyperparameters of $q(Q)$
+\label{sec:appendix-nam-M-Q}
 
-We want to set $q(\pi)$ proportional to
+We want to set $q(Q)$ proportional to
 
-$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
+$p(Q)\exp\left\{\E_{q(z)} \log p(z|Q)\right\}$.
 
 The expectation is
 
 \begin{eqnarray*}
-\E_{q(z)} \log p(z|\pi)  = \E_{q(z)} \sum_{i} \log \pi_{z_{i}}
-&=& \sum_{z_{1},\ldots,z_{n}}\sum_{i} \left[\log \pi_{z_{i}} \right] \gamma_{1z_{1}},\ldots, \gamma_{nz_{n}}\\
-&=& \sum_{i} \sum_{k} \gamma^{i}_{k} \log \pi_{k} \\
-&=& \sum_{k} \log \pi_{k}^{n_{k}}   \\
+\E_{q(z)} \log p(z|Q)  = \E_{q(z)} \sum_{i} \log Q_{z_{i}}
+&=& \sum_{z_{1},\ldots,z_{n}}\sum_{i} \left[\log Q_{z_{i}} \right] \gamma_{1z_{1}},\ldots, \gamma_{nz_{n}}\\
+&=& \sum_{i} \sum_{k} \gamma^{i}_{k} \log Q_{k} \\
+&=& \sum_{k} \log Q_{k}^{n_{k}}   \\
 \end{eqnarray*}
 
 where $n_{k} = \sum_{i} \gamma^{i}_{k}$ is the current approximate
@@ -695,8 +695,8 @@ posterior expected number of individuals assigned to population
 $k$. Therefore
 
 \begin{eqnarray*}
-p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}
-&\propto& \prod_{k}\pi_{k}^{\lambda^{0}_{k} - 1 + n_{k} },
+p(Q)\exp\left\{\E_{q(z)} \log p(z|Q)\right\}
+&\propto& \prod_{k}Q_{k}^{\lambda^{0}_{k} - 1 + n_{k} },
 \end{eqnarray*}
 
 and the update is achieved by setting the hyperparameters equal to the
@@ -758,8 +758,8 @@ counts:
 \begin{align*}
   d_{KL}(q||p)
   =&~ \int q(\theta)\log \frac{q(\theta)}{p(\theta)} d\theta \\
-  =&~ \int q(\mu) \log \frac{q(\mu)}{p(\mu)} d\mu + \int q(\pi) \log \frac{q(\pi)}{p(\pi)} d\pi\\
-  =&~ \sum_{l} \sum_{k} d_{KL}\Big(q(\mu_{lk\cdot})||p(\mu_{lk\cdot})\Big) + d_{KL}\Big(q(\pi_{\cdot})||p(\pi_{\cdot})\Big),
+  =&~ \int q(\mu) \log \frac{q(\mu)}{p(\mu)} d\mu + \int q(Q) \log \frac{q(Q)}{p(Q)} dQ\\
+  =&~ \sum_{l} \sum_{k} d_{KL}\Big(q(\mu_{lk\cdot})||p(\mu_{lk\cdot})\Big) + d_{KL}\Big(q(Q_{\cdot})||p(Q_{\cdot})\Big),
 \end{align*}
 #+end_latex
 
@@ -780,9 +780,9 @@ given in equation 52 of \citet{penny-roberts-2000} as
 ***** The average missing data probability term
 #+begin_latex
 \begin{align*}
-  \E_{q(\pi,z)}\log p(z|\pi) 
-  =&~ \sum_{i} \E_{q(z_{i})}\E_{q(\pi_{\cdot})} \log \pi_{z_{i}} \\
-  =&~ \sum_{i} \sum_{k} \gamma^{i}_{k} \int q(\pi_{\cdot}) \log \pi_{k} d\pi_{\cdot} \\
+  \E_{q(Q,z)}\log p(z|Q) 
+  =&~ \sum_{i} \E_{q(z_{i})}\E_{q(Q_{\cdot})} \log Q_{z_{i}} \\
+  =&~ \sum_{i} \sum_{k} \gamma^{i}_{k} \int q(Q_{\cdot}) \log Q_{k} dQ_{\cdot} \\
   =&~ \sum_{i} \sum_{k} \gamma^{i}_{k} \left[\digamma(\lambda^{1}_{k}) - \digamma(\sum_{k'}\lambda^{1}_{k'})\right] \\
   =&~ \left[ \sum_{i} \sum_{k} \gamma^{i}_{k} \digamma(\lambda^{1}_{k})\right] - n\digamma(\sum_{k'}\lambda^{1}_{k'})\\
   =&~ \left[ \sum_{k} m_{k} \digamma(\lambda^{1}_{ik})\right] - n\digamma(\sum_{k'}\lambda^{1}_{k'}),\\
@@ -823,19 +823,19 @@ $\gamma^{ila}_{k} \propto \exp\left\{\E_{q(\theta)} \log p(z_{ila}=k,x_{ila}|\th
 The complete-data log likelihood is
 
 \begin{equation*}
-\log p(z_{ila}=k,x_{ila}|\theta) = \log \pi_{ik} + \log \mu_{klx_{ila}},
+\log p(z_{ila}=k,x_{ila}|\theta) = \log Q_{ik} + \log \mu_{klx_{ila}},
 \end{equation*}
 
 so we need to evaluate integrals of the form
 
-$\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
+$\int q(Q_{i\cdot}) \log Q_{ik} dQ_{i\cdot}$ and $\int q(\mu_{kl\cdot}) \log \mu_{klj} d\mu_{kl\cdot}$.
 
-Since the distributions $q(\pi_{i\cdot})$ and $q(\mu_{kl\cdot})$ are
+Since the distributions $q(Q_{i\cdot})$ and $q(\mu_{kl\cdot})$ are
 both Dirichlet, these have the same form. The first is
 
 \begin{eqnarray*}
-\int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} 
-&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{ik'}\Big)}\prod_{k'}\pi_{ik'}^{\lambda^{1}_{ik}-1}\right] \log \pi_{ik} d\pi_{i\cdot} \\
+\int q(Q_{i\cdot}) \log Q_{ik} dQ_{i\cdot} 
+&=& \int \left[\frac{\Gamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big)}{\prod_{k'}\Gamma\Big(\lambda^{1}_{ik'}\Big)}\prod_{k'}Q_{ik'}^{\lambda^{1}_{ik}-1}\right] \log Q_{ik} dQ_{i\cdot} \\
 &=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big),
 \end{eqnarray*}
 where $\digamma$ is the digamma function, and the second one is
@@ -849,32 +849,32 @@ The expectation that we are trying to evaluate is then
 \begin{eqnarray*}
 \log \gamma_{ilk} 
 &=& \E_{q(\theta)}\log p(z_{il}=k,x_{il}|\theta) \\
-&=& \int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} + \int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
+&=& \int q(Q_{i\cdot}) \log Q_{ik} dQ_{i\cdot} + \int q(\mu_{lk\cdot}) \log \mu_{lkx_{ila}} d\mu_{lk\cdot} \\
 &=& \digamma\Big(\lambda^{1}_{ik}\Big) - \digamma\Big(\sum_{k'}\lambda^{1}_{ik'}\Big) + \digamma\Big(\alpha^{1}_{klx_{lia}}\Big) - \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{1}_{klj'}\Big).
 \end{eqnarray*}
 
 **** M step
-***** Updating the hyperparameters of $q(\pi)$
+***** Updating the hyperparameters of $q(Q)$
 \label{sec:appendix-am-M-pi}
 
-We want to set $q(\pi)$ proportional to
+We want to set $q(Q)$ proportional to
 
-$p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\}$.
+$p(Q)\exp\left\{\E_{q(z)} \log p(z|Q)\right\}$.
 
 This factorises across individuals as
 
 \begin{equation*}
-p(\pi)\exp\left\{\E_{q(z)} \log p(z|\pi)\right\} = \prod_{i} p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)\right\},
+p(Q)\exp\left\{\E_{q(z)} \log p(z|Q)\right\} = \prod_{i} p(Q_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|Q)\right\},
 \end{equation*}
 
-so we can update the hyperparameters of $p(\pi_{i\cdot})$
+so we can update the hyperparameters of $p(Q_{i\cdot})$
 independently for each individual $i$. The expectation is
 
 \begin{eqnarray*}
-\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi)  &=& \E_{q(z\cdot\cdot)} \sum_{l} \sum_{a=1}^{2} \log \pi_{iz_{ila}} \\
-&=& \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \log \pi_{ik} \\
-&=& \sum_{k} \left[\log \pi_{ik}\right] \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k} \\
-&=& \sum_{k} \log \pi_{ik}^{m_{ik}} \\
+\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|Q)  &=& \E_{q(z\cdot\cdot)} \sum_{l} \sum_{a=1}^{2} \log Q_{iz_{ila}} \\
+&=& \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \log Q_{ik} \\
+&=& \sum_{k} \left[\log Q_{ik}\right] \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k} \\
+&=& \sum_{k} \log Q_{ik}^{m_{ik}} \\
 \end{eqnarray*}
 
 where $m_{ik} = \sum_{l} \sum_{a=1}^{2} \gamma^{ila}_{k}$ is the
@@ -882,8 +882,8 @@ current approximate posterior expected number of allele copies at all
 loci in individual $i$ that derive from population $k$. Therefore
 
 \begin{eqnarray*}
-p(\pi_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|\pi_{i\cdot})\right\}
-&\propto& \prod_{k}\pi_{ik}^{\lambda^{0}_{ik} - 1 + m_{ik} },
+p(Q_{i\cdot})\exp\left\{\E_{q(z_{i\cdot\cdot})} \log p(z_{i\cdot\cdot}|Q_{i\cdot})\right\}
+&\propto& \prod_{k}Q_{ik}^{\lambda^{0}_{ik} - 1 + m_{ik} },
 \end{eqnarray*}
 
 and the update is achieved by setting the hyperparameters equal to the
@@ -935,14 +935,14 @@ achieved by setting
 \label{sec:appendix-am-convergence}
 ***** The K-L divergence between prior and approximate posterior
 This is similar to the no-admixture case (section
-\ref{sec:appendix-nam-convergence}); whereas $\pi$ previously
+\ref{sec:appendix-nam-convergence}); whereas $Q$ previously
 comprised a single distribution over $\{1,\ldots,K\}$, it now
 comprises $n$ such distributions:
 
 #+begin_latex
 \begin{align*}
   d_{KL}(q||p)
-  =&~ \sum_{l} \sum_{k} d_{KL}\Big(q(\mu_{lk\cdot})||p(\mu_{lk\cdot})\Big) + \sum_{i} d_{KL}\Big(q(\pi_{i\cdot})||p(\pi_{i\cdot})\Big),
+  =&~ \sum_{l} \sum_{k} d_{KL}\Big(q(\mu_{lk\cdot})||p(\mu_{lk\cdot})\Big) + \sum_{i} d_{KL}\Big(q(Q_{i\cdot})||p(Q_{i\cdot})\Big),
 \end{align*}
 #+end_latex
 
@@ -952,9 +952,9 @@ in which the component densities are all Dirichlet.
 
 #+begin_latex
 \begin{align*}
-  \E_{q(\pi,z)}\log p(z|\pi) 
-  =&~ \sum_{l} \sum_{i} \sum_{a=1}^{2} \E_{q(z_{ila})}\E_{q(\pi_{i\cdot})} \log \pi_{iz_{ila}} \\
-  =&~ \sum_{l} \sum_{i} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \int q(\pi_{i\cdot}) \log \pi_{ik} d\pi_{i\cdot} \\
+  \E_{q(Q,z)}\log p(z|Q) 
+  =&~ \sum_{l} \sum_{i} \sum_{a=1}^{2} \E_{q(z_{ila})}\E_{q(Q_{i\cdot})} \log Q_{iz_{ila}} \\
+  =&~ \sum_{l} \sum_{i} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \int q(Q_{i\cdot}) \log Q_{ik} dQ_{i\cdot} \\
   =&~ \sum_{l} \sum_{i} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \left[\digamma(\lambda^{1}_{ik}) - \digamma(\sum_{k'}\lambda^{1}_{ik'})\right] \\
   =&~ \sum_{i} \left[ \sum_{l} \sum_{a=1}^{2} \sum_{k} \gamma^{ila}_{k} \digamma(\lambda^{1}_{ik})\right] - 2L\digamma(\sum_{k'}\lambda^{1}_{ik'})\\
   =&~ \sum_{i} \left[ \sum_{k} m_{ik} \digamma(\lambda^{1}_{ik})\right] - 2L\digamma(\sum_{k'}\lambda^{1}_{ik'}),\\
