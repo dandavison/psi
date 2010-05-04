@@ -576,6 +576,20 @@ $q(\mu)$ in the correlated frequencies model differs only in that the
 'prior counts' of the number of copies of allele $j$ observed in
 population $k$ at locus $l$ are now given by $\alpha^{0}_{lkj}$
 ** Parallel algorithms
+Available computational techniques for fitting these models
+typically involve iterative hill-climbing algorithms, or Markov
+Chain Monte Carlo, and therefore are not parallelisable, since each
+iteration depends on the preceding iterations \fixme{Strategies
+involving simulating multiple Markov chains, or repeated
+hill-climbinging from different starting points, are of course
+amenable to parallelisation}. However, at each iteration,
+computations can be carried out in parallel processes, provided
+that certain across-process averages are computed at the end of
+each iteration. Two strategies for parallelisation are possible in
+practice: division-by-loci and division-by-individuals. Here I
+focus on division-by-loci. One reason for doing so is the number of
+loci is typically larger than the number of individuals and
+therefore more often exceeds \p, the number of processes.
 #+begin_latex
   \begin{algorithm}
     \caption{Admixture model: EM: Parallel}
