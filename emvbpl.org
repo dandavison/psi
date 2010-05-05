@@ -6,7 +6,7 @@
 Inference of population structure is often the main motivation for
 creating data sets of genetic variation at the level of species and
 populations. In addition, information about population structure is
-often required in other inference problems. A notable example is
+often required in other inference problems. A now familiar example is
 genome-wide association study of common diseases in humans. These
 studies seek to identify genomic regions within which genetic
 variation is associated with the phenotype of interest. Anticipated
@@ -95,7 +95,7 @@ paper.
 | $\sim$               | Draw value from probability distribution                                                                    |
 | $\gets$              | Assign value                                                                                                |
 | $\getsp$             | Assign value requiring subsequent normalisation of discrete probability distribution                        |
-| $\digamma$           | The digamma function                                                                                        |
+| $\digamma$           | Digamma function                                                                                            |
 
 * Models
 :PROPERTIES:
@@ -575,9 +575,11 @@ computations can be carried out in parallel processes, provided that
 certain across-process averages are computed at the end of each
 iteration. Two strategies for parallelisation are possible in
 practice: division-by-loci and division-by-individuals. Here I focus
-on division-by-loci. One reason for doing so is the number of loci is
-typically larger than the number of individuals and therefore more
-often exceeds \p, the number of processes.
+on division-by-loci. One reason for doing so is that the number of
+loci is typically larger than the number of individuals and therefore
+more often exceeds \p, the number of processes.
+*** Admixture model
+**** EM
 #+begin_latex
   \begin{algorithm}
     \caption{Admixture model: EM: Parallel}
