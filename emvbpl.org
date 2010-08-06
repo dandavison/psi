@@ -109,7 +109,7 @@ observed and each is assumed to belong to one of K groups. Thus for
 each item there is an unknown label Z_i \in {1,\ldots,K} indicating
 the group to which it belongs. The main objectives are to learn about
 the values of these labels, and about the value of K. Group k is
-characterised by a probability distribution f(x;\phi_k), and inference
+characterised by a probability distribution f(x; \phi_k), and inference
 for K and Z typically also requires inference for the parameters
 \phi_k.
 
@@ -611,7 +611,39 @@ more often exceeds \p, the number of processes.
         \end{lstlisting}
   \end{algorithm}
 #+end_latex
-   
+**** VB
+#+begin_latex
+\begin{algorithm}
+  \caption{Admixture model: VB (Explicit)}
+  \label{alg:em-nam}
+  \begin{lstlisting}[mathescape,escapeinside='']
+
+    '\textbf{E step}'
+
+    '\foreach individual $i$'
+        '\foreach locus $l$'
+            '\foreach chromosome $a$'
+                '\foreach group $k$'
+                    $\gamma_{ilak} \getsp
+                \exp\Big\{
+                \digamma\Big(\lambda^{(1)}_{ik}\Big) -
+                \digamma\Big(\sum_{k'=1}^K\lambda^{(1)}_{ik'}\Big) +
+                \digamma\Big(\alpha^{(1)}_{klX_{lia}}\Big) -
+                \digamma\Big(\sum_{j'=1}^{J_{l}}\alpha^{(1)}_{klj'}\Big)
+                \Big\}$
+
+    '\textbf{M step}'
+
+    '\foreach group $k$'
+        '\foreach individual $i$'
+            $\lambda^{(1)}_{ik} \leftarrow \lambda^{(0)}_{ik} + \sum_{l=1}^L \sum_{a=1}^{2} \gamma_{ilak}$
+        '\foreach locus $l$'
+            '\foreach allele type $j$'
+                $\alpha^{(1)}_{lkj} \leftarrow \alpha^{(0)}_{lkj} + \sum_{i=1}^n \sum_{a=1}^2\gamma_{ilak}I(X_{ila}=j)$
+  \end{lstlisting}
+\end{algorithm}
+#+end_latex
+
 * Results
 :PROPERTIES:
 :ID:       6d8cbdfb-0be1-474d-8a5f-74dcecb78916
@@ -1051,7 +1083,7 @@ Variational Bayes and parallel computing for fitting mixture models to genotype 
 Inference of population structure from large genotype data sets: variational Bayes and parallel computing
 * Config 							   :noexport:
 ** Org config
-#+startup: oddeven content
+#+startup: oddeven
 #+begin_src emacs-lisp :exports results
 (setq org-src-preserve-indentation t)
 (setq org-latex-to-pdf-process '("make pdf"))
