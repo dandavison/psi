@@ -1144,42 +1144,46 @@ clean:
 
 ** emvbpl.sty
 #+begin_src latex :tangle emvbpl.sty
-\usepackage[sectionbib]{natbib}
-\bibpunct{(}{)}{,}{a}{}{,}
-\usepackage{amsmath}
-\usepackage{amssymb}
-%\usepackage{txfonts}
-\usepackage{listings}
-\usepackage{mathrsfs}
-\usepackage{color}
-\usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
-\newcommand{\E}{\text{E}{}}
-\newcommand{\NL}{\nonumber\\}
-\let\(\undefined
-\let\)\undefined
-\newcommand{\(}{\left(}
-\newcommand{\)}{\right)}
-\let\|\undefined
-\newcommand{\|}{\arrowvert}
-\renewcommand{\digamma}{\Psi}
-\renewcommand*{\labelitemi}{\textbullet}
-\renewcommand*{\labelitemii}{\labelitemi}
-\renewcommand*{\labelitemiii}{\labelitemi}
-\renewcommand*{\labelitemiv}{\labelitemi}
-
-\usepackage{float}
-\floatstyle{ruled}
-\newfloat{algorithm}{thp}{lop}
-\floatname{algorithm}{Algorithm}
-
-\newcommand{\foreach}{\textbf{for each }}
-\newcommand{\pforeach}[1]{\textbf{for each }#1 \textbf{ in parallel}}
-\newcommand{\Dirichlet}{\text{Dirichlet}}
-
-\newcommand{\fixme}[1]{\footnote{\textcolor{red}{\textbf{FIXME} #1}}}
-
-\newcommand\leftsquigarrow{\reflectbox{\ensuremath{\rightsquigarrow}}}
-\newcommand{\getsp}{\leftsquigarrow}
+  \usepackage[sectionbib]{natbib}
+  \bibpunct{(}{)}{,}{a}{}{,}
+  \usepackage{amsmath}
+  \usepackage{amssymb}
+  %\usepackage{txfonts}
+  \usepackage{listings}
+  \usepackage{mathrsfs}
+  \usepackage{color}
+  \usepackage[left=2cm,top=3cm,right=3cm,head=2cm,foot=2cm]{geometry}
+  \newcommand{\E}{\text{E}{}}
+  \newcommand{\NL}{\nonumber\\}
+  \let\(\undefined
+  \let\)\undefined
+  \newcommand{\(}{\left(}
+  \newcommand{\)}{\right)}
+  \let\|\undefined
+  \newcommand{\|}{\arrowvert}
+  \renewcommand{\digamma}{\Psi}
+  \renewcommand*{\labelitemi}{\textbullet}
+  \renewcommand*{\labelitemii}{\labelitemi}
+  \renewcommand*{\labelitemiii}{\labelitemi}
+  \renewcommand*{\labelitemiv}{\labelitemi}
+  
+  \usepackage{fontspec}
+  %% \setmainfont{Gentium}
+  \setsansfont{Gentium}
+  
+  \usepackage{float}
+  \floatstyle{ruled}
+  \newfloat{algorithm}{thp}{lop}
+  \floatname{algorithm}{Algorithm}
+  
+  \newcommand{\foreach}{\textbf{for each }}
+  \newcommand{\pforeach}[1]{\textbf{for each }#1 \textbf{ in parallel}}
+  \newcommand{\Dirichlet}{\text{Dirichlet}}
+  
+  \newcommand{\fixme}[1]{\footnote{\textcolor{red}{\textbf{FIXME} #1}}}
+  
+  \newcommand\leftsquigarrow{\reflectbox{\ensuremath{\rightsquigarrow}}}
+  \newcommand{\getsp}{\leftsquigarrow}
 #+end_src
 
 ** LaTeX headers

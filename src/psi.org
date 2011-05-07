@@ -1,0 +1,1342 @@
+#+title: psi: R library
+
+* Required libraries
+#+begin_src R
+  source("/home/dan/src/common/util.R")
+  source("/home/dan/src/iogeno/iogeno.R")
+  source("/home/dan/src/psi/structure-mcmc/structure-mcmc.R")
+#+end_src
+
+* converge
+
+#+begin_src R
+  converge <- function(data, modelK=trueK, model=c("mcmcam", "vbam1"),
+                       t=1e4, burnin=0, thin=1, print.period=10) {
+
+    ## require(zoo)
+    require(clue)
+    n <- ncol(data)
+    L <- nrow(data)
+    true <- attr(data, "true")
+    trueK <- ncol(true$q)
+    trueq.clu <- as.cl_partition(true$q)
+    model <- match.arg(model)
+    fit <- psi(data, modelK, model=model, t=t, thin=thin, burnin=0, print.period=print.period)
+    ## times <- as.POSIXct(fit$times, origin="1970-01-01 00:00:00")
+    times <- fit$times - fit$times[1]
+    if(model == "vbam1") t <- length(times)
+    stopifnot(t == length(times))
+    d <- switch(model,
+                "mcmcam" = {
+                  ## The new q will conceptually have dimensions c(t,K,n) --
+                  ## i.e. each MCMC sample is a K x n matrix Q. However neither filter nor rollapply
+                  ## operate on arrays with more than 2 dimensions, so
+                  ## q <- fit[grep("qsam", names(fit))]
+                  ## q <- matrix(unlist(q), nrow=t)
+                  q <- fit$states
+                  dim(q) <- c(modelK*n, t)
+                  q <- t(q)
+                  warning("I've screwed with dimensions of fit$states in psi() without testing so far")
+
+                  ## q <- filter(q, rep(1, window) / window, sides=1)
+                  ## ok <- seq(t) >= window
+                  after.burnin <- seq(t) > burnin
+                  t <- t - burnin
+                  q <- apply(q[after.burnin,], 2, cumsum) / seq(t)
+                  ok <- seq(t) > 0
+
+                  dim(q) <- c(t, modelK, n)
+                  q <- aperm(q, c(1,3,2))
+                  ## q <- rollapply(q, window, mean, align="right", na.pad=TRUE)
+                  ## q <- array(as.numeric(q), dim=c(t, modelK, n))
+                  clue <- lapply(which(ok), function(i) as.cl_partition(q[i,,]))
+                  d <- cl_dissimilarity(clue, trueq.clu)
+                  c(rep(NA, sum(!after.burnin) + sum(!ok)), d)
+                },
+                "vbam1" = {
+                  q <- fit$states
+                  dim(q) <- c(modelK, n, t)
+                  q <- aperm(q, c(3, 2, 1))
+                  clue <- lapply(1:t, function(i) as.cl_partition(q[i,,] / rowSums(q[i,,])))
+                  c(cl_dissimilarity(clue, trueq.clu))
+                })
+    cbind(times, d)
+  }
+
+  tss.plot <- function(td, col=seq(length(td))) {
+    ## plot a list of converge() time series with different time indices,
+    ## assuming same origin time.
+
+    xlim <- range(unlist(lapply(td, "[", , 1)), na.rm=TRUE)
+    ylim <- range(unlist(lapply(td, "[", , 2)), na.rm=TRUE)
+    plot(NA, xlim=xlim, ylim=ylim, type="n")
+    for(i in seq_along(td))
+      lines(td[[i]], col=col[i], lwd=2)
+    legend("topright", legend=names(td), lwd=2, col=col)
+  }
+#+end_src
+
+* VB look up
+#+begin_src R
+  ElogB <- function(a, b, n) {
+    ## monte carlo estimates (based on n draws) of the expectation of
+    ## the log of a Beta(a,b) rv
+    ## for use in constructing look-up table for VB computations
+    na <- length(a)
+    nb <- length(b)
+    sam <- log(rbeta(n * na * nb, shape1=rep(a, nb), shape2=rep(b, each=na)))
+    dim(sam) <- c(na, nb, n)
+    ans <- apply(sam, c(1,2), mean)
+    dimnames(ans) <- list(a,b)
+    ans
+  }
+#+end_src
+
+* VB simulation study
+
+#+begin_src R
+  psi.vb.simulation.study <- function(trueKK=3, modelKK=1:5, n=40, L=100, drift.F=NULL, ndatasets.per.K=1, nruns.per.dataset=1,
+                                      model.admix, data.admix=model.admix, fixed=FALSE, data) {
+
+    model <- if(model.admix) "vbam" else "vbnam"
+
+    simulate.data <- function(trueK)
+      rmixture(n=n, K=trueK, L=L, F=drift.F, admix=data.admix,
+               mu=if(fixed) t(rmultinom(L, 1, rep(1/trueK, trueK))) else NULL)
+
+    if(missing(data))
+      data <- lapply(trueKK, function(trueK) replicate(ndatasets.per.K, simulate.data(trueK), simplify=FALSE))
+
+    max.free.energy.fit <- function(modelK, x) {
+      cat("model K = ", modelK, "\t")
+      fits <- replicate(nruns.per.dataset, psi(x, modelK, model=model), simplify=FALSE)
+      cat("\n")
+      F <- sapply(fits, "[[", "F")
+      ##fits ##[[which.max(F)]]
+      max(F)
+    }
+    infer.K <- function(x) {
+      cat("###############################\n\n")
+      cat("true K =", ncol(attr(x, "true")$mu), "\n")
+      lapply(modelKK, max.free.energy.fit, x=x)
+    }
+    rapply(data, infer.K, how="replace")
+  }
+
+  psi.vb.simulation.study.plot <- function(out) {
+    ## nmodelK <- rapply(out, length)
+    nmodelK <- sapply(out, sapply, length)
+    stopifnot(all.same(nmodelK))
+    modelKK <- 1:nmodelK[1]
+
+    ndatasets.per.K <- sapply(out, length)
+    stopifnot(all.same(ndatasets.per.K))
+    ndatasets.per.K <- ndatasets.per.K[1]
+
+    trueKK <- seq_along(out)
+
+    plot.one.trueK <- function(outK) {
+      Fvals <- unlist(outK)
+      plot(NA, xlim=range(modelKK), ylim=range(Fvals), type="n")
+      lapply(outK, function(x) lines(modelKK, x))
+    }
+    op <- par(mfrow=c(2,3))
+
+    lapply(trueKK, function(trueK) { plot.one.trueK(out[[trueK]]) ; abline(v=trueK, col="blue") })
+  }
+#+end_src
+
+* VB NAM sim
+
+#+begin_src R
+  psi.vbnam.sim.error <- function(K=3, n=100, LL=c(4, 16, 64, 256),
+                                  drift.F=NULL, ndatasets.per.L=10, nruns.per.dataset=3) {
+
+    do.one.L.value <- function(L) {
+      ## return nruns x ndatasets array
+      vbsim <- psi.vb.simulation.study(trueKK=K, n=n, L=L, drift.F=drift.F, ndatasets.per.K=ndatasets.per.L,
+                                       nruns.per.dataset=nruns.per.dataset, modelKK=K, model.admix=FALSE)
+      x <- unlist(unlist(vbsim, recurs=F), recurs=F)
+      sapply(x, sapply, psi.nam.error, nreps=1000, quiet=FALSE)
+    }
+    structure(lapply(LL, do.one.L.value), names=LL)
+  }
+
+  psi.vbnam.sim.error.plot <- function(ee) {
+    LL <- as.integer(names(ee))
+    e <- ee[[1]]
+    n <- length(e)
+    nruns <- nrow(e)
+    ndatasets <- ncol(e)
+    plot(range(LL), c(-0.1, 1.1), type="n")
+    for(i in seq_along(ee)) {
+      e <- ee[[i]]
+      points(jitter(rep(LL[i], n)), e, col=rep(seq(ndatasets), each=nruns))
+    }
+  }
+#+end_src
+
+* NAM error
+#+begin_src R
+  psi.nam.error <- function(fit, ...) psi.nam.error.pairwise(fit, ...)
+
+  psi.nam.error.exhaustive <- function(fit, true=attr(fit$data, "true"), perm=FALSE) {
+    ## This is intended to be a measure of the error in the fit of the
+    ## no-admixture model. For data simulated under this model, there
+    ## is a true population of origin k0_i for each individual
+    ## i. There is also a point estimate k_i of the population of
+    ## origin for each individual. However, what is unknown is the
+    ## mapping between the labels of the K fitted populations, and the
+    ## labels of the K populations used in the data simulation. This
+    ## mapping is a permutation v of the integers 1...K. For a
+    ## particular permutation v one measure of the error is
+    ## mean(v[k_i] == k0_i) i.e. the proportion of correctly
+    ## classified individuals. This function returns the lowest value
+    ## of this proportion, over all possible permutations.
+
+    require(combinat)
+    K <- ncol(fit$pz)
+    truepop <- max.col(true$q)
+    error <- function(perm) mean(max.col(fit$pz[,perm,drop=FALSE]) != truepop)
+    ee <- unlist(permn(1:K, fun=error))
+    wmin <- which.min(ee)
+    e <- ee[wmin]
+    if(perm) attr(e, "perm") <- permn(1:K)[[wmin]]
+    e
+  }
+
+  psi.nam.error.hillclimb <- function(fit, true=attr(fit$data, "true"), nreps=K^3, quiet=TRUE) {
+    ## See psi.nam.error.exhaustive. Here, rather than try to find the
+    ## global minimum exhaustively, a hill-climbing approach is taken,
+    ## starting with some initial permutation.
+    K <- ncol(fit$pz)
+    ## if(K < 7) return(psi.nam.error.exhaustive(fit))
+    truepop <- max.col(true$q)
+    error <- function(perm) mean(max.col(fit$pz[,perm,drop=FALSE]) != truepop)
+    optimize.permn(error, 1:K, nreps=nreps, quiet=quiet)$objective
+  }
+
+  psi.nam.error.pairwise <- function(fit, true=attr(fit$data, "true"), ...) {
+    ## This is a different approach to assessing the error of a fit of
+    ## the no_admixture model. Consider the matrix H in which H_ij = 1
+    ## if individuals i and j were generated by the same cluster and 0
+    ## otherwise. H can be constructed using the true clusters of
+    ## origin, and the estimated clusters. The agreement between the
+    ## two matrices is a measure of the error in the fit.
+
+    trupop <- max.col(true$q)
+    fitpop <- max.col(fit$pz)
+    truH <- outer(trupop, trupop, "==")
+    fitH <- outer(fitpop, fitpop, "==")
+    mean(truH != fitH)
+  }
+#+end_src
+
+* AM error
+
+#+begin_src R
+  psi.am.error <- function(fit, true, B=1e4) {
+    ## We know the true allele frequencies and admixture
+    ## proportions. The fitted model specifies Dirichlet distributions
+    ## for these. A measure of the error in the admixture proportions
+    ## is \sum_i E ||q_i - q0_i|| where q0_i is the true admixture
+    ## proportions for individual i, ||.|| is Euclidean distance, and
+    ## the expectation is over the posterior density of q_i. If can't
+    ## do analytically then simulate. Alternatively use limit of KL
+    ## divergence as one density tends towards having zero variance?
+    require(combinat)
+    K <- ncol(true$q)
+    n <- nrow(true$q)
+    dirichlet.error <- function(x, alpha)
+      colMeans((x - t(rdirichlet(B, alpha)))^2)
+    error <- function(perm) {
+      lambda <- fit$lambda[,perm]
+      sum(sapply(1:n, function(i) dirichlet.error(true$q[i,], lambda[i,])))
+    }
+    sapply(permn(1:K, fun=error), identity)
+  }
+#+end_src
+
+* PSD structure
+#+begin_src R
+  structure.jp <- function(data, K, model=c("am","nam"), burnin=1000, nmcmc=1000,
+                           usepopinfo=FALSE, pop=NULL) {
+    dir <- tempfile()
+    dir.create(dir)
+    model <- match.arg(model)
+    cat("running structure in", dir)
+    cwd <- setwd(dir) ; on.exit(setwd(cwd))
+    write.structure.files(data, K, admixture=(model %in% c("am")), burnin=burnin, nmcmc=nmcmc,
+                          usepopinfo=usepopinfo, pop=pop, file="tmp")
+    file.create("extraparams")
+    system("structure")
+    read.output <- function(file) {
+      q <- read.structure.Q.hat("tmp.out_f", n=ncol(data), K=K)
+      txt <- grep("Estimated Ln Prob of Data   = ", readLines(file, warn=FALSE), value=TRUE)
+      F <- as.numeric(gsub('.*= (-?\\d+\\.?\\d*)$', '\\1', txt, perl=TRUE))
+      list(q=q, F=F)
+    }
+    fit <- read.output("tmp.out_f")
+    fit$data <- data
+    fit$model <- list(K=K, model=model, nmcmc=nmcmc, burnin=burnin)
+    fit$outdir <- dir
+    class(fit) <- c("psifit", "list")
+    fit
+  }
+
+  vb.vs.jp <- function(n=20, trueK=2, modelK = 1:4, L=100, model=c("am", "nam"),
+                       ndata=1, nruns=1, vbnruns=1, burnin=1000, nmcmc=5000) {
+    model <- match.arg(model)
+    psimodel <- c(am='vbam1', nam='vbnam')[model]
+    t <- F <- array(dim=c(ndata, length(modelK), nruns, 2),
+                    dimnames=list(data=NULL, modelK=modelK, run=NULL, alg=c('vb', 'jp')))
+    for(i in seq(ndata)) {
+      data <- rmixture(n=n, K=trueK, L=L, admix=(model == 'am'))
+      for(ki in seq_along(modelK)) {
+        modelk <- modelK[ki]
+        for(run in seq(nruns)) {
+          F[i, ki, run, 'vb'] <- -Inf
+          t0 <- Sys.time()
+          for(vbrun in seq(vbnruns)) {
+            tmp <- psi(data=data, K=modelk, model=psimodel, t=1e6)$F
+            F[i, ki, run, 'vb'] <- max(F[i, ki, run, 'vb'], tmp)
+          }
+          t1 <- Sys.time()
+          t[i, ki, run, 'vb'] <- as.numeric(t1 - t0)
+
+          t0 <- Sys.time()
+          F[i, ki, run, 'jp'] <- structure.jp(data=data, K=modelk, model=model, burnin=burnin, nmcmc=nmcmc)$F
+          t1 <- Sys.time()
+          t[i, ki, run, 'jp'] <- as.numeric(t1 - t0)
+        }
+      }
+    }
+    attr(F, "t") <- t
+    F
+  }
+
+  vb.vs.jp.plot <- function(F, main="", rel=FALSE) {
+    dnn <- dimnames(F)
+    ndata <- dim(F)[1]
+    nmodelK <- dim(F)[2]
+    nruns <- dim(F)[3]
+    modelK <- as.integer(dnn$modelK)
+    pch <- c(vb=1, jp=1)
+    col <- c(vb='blue', jp='black')
+    par(mfrow=c(4, ceiling(ndata/4)), mar=rep(2,4), oma=c(0,0,3,0))
+    for(i in seq(ndata)) {
+      plot(NA, xlim=range(modelK), ylim=range(F[i,,,]))
+      for(alg in dnn$alg)
+        points(rep(modelK, nruns), F[i,,,alg], pch=pch[alg], col=col[alg])
+      legend("topleft", legend=dnn$alg, text.col=col, bty="n")
+    }
+    title(main=main, outer=TRUE)
+  }
+#+end_src
+
+* psi
+#+begin_src R
+  psi <- function(data, K, model=c("vbam0", "vbam1", "vbnam", "emam", "mcmcam", "mcmcsam"),
+                  t=100, thin=10, burnin=1000,
+                  print.period=10, fixpops=NULL) {
+    ## call the psi C code
+    model <- match.arg(model)
+    model.code <- c(emam=0, mcmcam=1, mcmcsam=1, vbam0=2, vbam1=3, vbnam=5)
+    n <- ncol(data)
+    L <- nrow(data)
+    dir <- tempfile()
+    dir.create(dir)
+    genofile <- file.path(dir, "genos")
+    write.unspaced.genotypes(data, file=genofile)
+    if(length(grep("(vb)|(em)", model)) && t < 1e3)
+      stop(t, " iterations of hill-climbing algorithm requested -- don't you want to allow it to converge?")
+    call <- paste("psi", "-n", n, "-L", L, "-K", K, "-g", genofile, "-t", as.integer(t), "-h", as.integer(thin),
+                  "-o", dir, "-v", model.code[model], "-b", burnin, "-a", print.period)
+    if(!is.null(fixpops)) {
+      stopifnot(length(fixpops) == n)
+      fixpopfile <- file.path(dir, "fixpops")
+      fixpops[is.na(fixpops) | fixpops < 1 | fixpops > K] <- -1
+      stopifnot(fixpops %in% c(1:K, -1))
+      write.tabular(fixpops - 1, file=fixpopfile) ## C vs R indexing
+      call <- paste(call, "-z", fixpopfile)
+    }
+    if(model == "mcmcsam") {
+      d <- attr(data, "true")$d
+      ## skern <- dnorm(d) / dnorm(0)
+      skern <- diag(n)
+      skernelfile <- file.path(dir, "skernel")
+      write.tabular(skern, file=skernelfile)
+      call <- paste(call, "-s", skernelfile)
+    }
+    system(call)
+    outfiles <- list(emam=c(loglike="loglike", mu="mu", q="q", times="times"),
+                     vbam0=c(F="F", alpha="alpha", lambda="lambda", times="times"),
+                     vbam1=c(F="F", alpha="alpha", lambda="lambda", times="times"),
+                     vbnam=c(F="F", alpha="alpha", lambda="lambda", pz="pz", times="times"),
+                     mcmcam=c(q="q", qsam=sprintf("qsam-%05d", seq(n)), times="times", wstates="wstates"))
+    outfiles$mcmcsam <- outfiles$mcmcam
+    fit <- sapply(outfiles[[model]], function(file) {
+      path <- file.path(dir, file)
+      if(file.exists(path)) read.matrix(path)
+      else NULL
+    }, simplify=FALSE)
+    if(model %in% c("vbam1", "mcmcam"))
+      fit$states <- array(scan(file.path(dir, "states"), quiet=TRUE), c(K,n,length(fit$times)))
+    fit$data <- data
+    fit$model <- list(K=K, model=model, t=t, burnin=burnin)
+    class(fit) <- c("psifit","list")
+
+    fit
+  }
+#+end_src
+
+* psitest
+#+begin_src R
+  psitest <- function(file="~/src/psi/vbam.times") {
+    set.seed(1)
+    x <- rmixture(n=20, K=3, L=50, admix=TRUE)
+    t <- system.time(fit <- psi(x, 3, model="vbam1", t=167))
+    cat("##166        196.9807      -1821.0912      -1040.9842       1625.3973      -1433.6588          0.0853\n")
+    cat(paste(Sys.time(), "\t",
+              round(t[1] + t[4], 3), round(t[2] + t[5], 3), round(t[3], 3), "\n"), file=file, append=TRUE)
+    t
+  }
+#+end_src
+* psi plotting functions
+#+begin_src R
+  plot.psifit <- function(fit, jitter=FALSE) {
+    qname <- c(emam="q", mcmcam="q", mcmcsam="q", vbam0="lambda", vbam1="lambda", vbnam="pz", jpam="q")[fit$model$model]
+    q <- fit[[qname]]
+    if(jitter) q <- jitter(q)
+    plot.columns(q, attr(fit$data, "true")$q)
+  }
+
+  plot.psifit.vbam.mcmcam <- function(fit.vbam, fit.mcmc, map=1, mfrow=c(4, ceiling(n/4))) {
+    n <- nrow(fit.vbam$lambda)
+    par(mfrow=mfrow, mar=rep(2,4))
+
+    for(i in 1:n) {
+      curve(dbeta(x, shape1=fit.vbam$lambda[i,1], shape2=fit.vbam$lambda[i,2]), from=0, to=1, col="blue")
+      qsam <- fit.mcmc[[sprintf("qsam%d", i)]][,map]
+      lines(density(qsam, from=0, to=1), col="black")
+    }
+  }
+
+  psi.plot.output <- function(file) {
+    x <- read.matrix(file)
+    matplot(x, type="l")
+    legend("topleft", legend= c("d_KL", "E log q(z)", "E log like", "entropy", "free energy"), col=1:5, lwd=3)
+  }
+#+end_src
+* Simulation
+#+begin_src R
+  rdrift <- function(F, L, model=c("BN","ND"), pa.min=0.1, pa.max=0.9) {
+    ## return [1:L,1:K] array
+
+    stopifnot(F >= 0, F < 1)
+    K <- length(F)
+    pa <- runif(L, min=pa.min, max=pa.max)  ## ancestral allele frequencies
+
+    switch(match.arg(model),
+           "ND" = {
+             require(MASS)
+             p <- t(sapply(pa, function(pa) mvrnorm(n=1, mu=rep(pa,K), Sigma=diag(F*pa*(1-pa)))))
+             p[p < 0] <- 0
+             p[p > 1] <- 1
+             if(K == 1) {
+               stopifnot(dim(p) == c(K, L))
+               dim(p) <- c(L, K)
+             }
+           },
+           "BN" = {
+             FF <- (1-F)/F
+             if(TRUE || any(F == 0)) {
+               p <- matrix(NA, L, K)
+               for(k in 1:K) {
+                 if(F[k] == 0) p[,k] <- pa
+                 else p[,k] <- rbeta(L, pa*FF[k], (1-pa)*FF[k])
+               }
+             }
+             else {
+               ## p <- t(sapply(pa, function(pal) rbeta(K, pal*FF, (1-pal)*FF)))
+               pa <- rep(pa, 2)
+               FF <- rep(FF, each=L)
+               p <- rbeta(L*K, pa * FF, (1-pa)*FF)
+               dim(p) <- c(L,K)
+             }
+           })
+    p
+  }
+
+  rmixture <- function(n, K, L, F=NULL, mu=NULL, q=NULL, admix=TRUE, spatial=FALSE,
+                       m=seq(-1, 1, length=K), s=1,
+                       model=c("binomial", "gaussian"), drift.model=c("BN","ND"),
+                       diploid=TRUE, polymorphic.only=FALSE) {
+
+    ## simulate n random L-vectors from K-mixture model
+    model <- match.arg(model)
+
+    if(!is.null(mu)) {
+      if(missing(K)) K <- ncol(mu)
+      if(missing(L)) L <- nrow(mu)
+      stopifnot(dim(mu) == c(L,K))
+    }
+    else if(!is.null(F)) {
+      if(length(F) == 1) F <- rep(F, K) else stopifnot(length(F) == K)
+      mu <- rdrift(F=F, L=L,  model=drift.model) ## correlated frequencies
+    }
+    else mu <- replicate(K, rbeta(L, shape1=1, shape2=1)) ## independent allele frequencies
+
+    twon <- 2*n
+    indiv <- rep(1:n, each=2)
+    stopifnot(model == "gaussian" || all(mu >= 0 & mu <= 1))
+
+    ## Set admixture proportions
+    if(is.null(q)) {
+      if(admix) {
+        if(spatial) {
+          ## m are locations of cluster means
+          x <- runif(n, min=min(m)-2*s, max=max(m)+2*s) ## locations of sampled individuals
+          ## q <- sapply(m, function(m) dnorm(x, mean=m, sd=s))
+          q <- dnorm(x, mean=rep(m, each=n), sd=s)
+          dim(q) <- c(n, K)
+          q <- q / rowSums(q)
+        }
+        q <- rdirichlet(n=n, a=rep(1/K, K))
+      }
+      else {
+        pi <- rep(1/K, K)
+        q <- t(rmultinom(n, size=1, prob=pi))
+      }
+    }
+    else {
+      stopifnot(admix, nrow(q) == n, ncol(q) == K)
+      q <- q / rowSums(q)
+    }
+
+    ## Simulate missing data (no linkage)
+    z <- sapply(1:twon, function(chrom) sample(1:K, size=L, replace=TRUE, prob=q[indiv[chrom],]))
+    dim(z) <- c(L, twon)
+
+    ## Simulate observed data
+    mus <- mu[cbind(c(row(z)), c(z))]
+    g <- switch(model,
+                "binomial" = array(as.integer(rbinom(L*twon, size=1, prob=mus)),dim=c(L, twon)),
+                "gaussian" = rnorm(L*n, mean=mus, sd=1), dim=c(L, n))
+
+    if(model == "binomial" && diploid) g <- sum.adjacent.columns(g)
+    if(polymorphic.only) {
+      ## lose monomorphic loci
+      p <- rowMeans(g) / 2
+      polymorphic <- p > 0 & p < 1
+      g <- g[polymorphic,]
+      mu <- mu[polymorphic,]
+    }
+    true <- list(mu=mu, q=q)
+    if(spatial) true$d <- outer(x, x, "-")
+    attr(g, "true") <- true
+    g
+  }
+
+  ## Simulate data from a model of independent drift
+  simulate.data <- function(n=c(4,4), F=c(.2,.2), K=2, L=10, drift.model=c("BN","ND"),
+                            pa.min=0.1, pa.max=0.9, diploid=TRUE) {
+    stopifnot(K == 2)
+    if(length(F) == 1) F <- rep(F, 2)
+    if(!diploid) n <- 2*n
+
+    ## Simulate allele frequencies
+    pp <- rdrift(F=F, L=L, model=drift.model, pa.min=pa.min, pa.max=pa.max)
+
+    q <- matrix(c(rep(c(1,0), n[1]/2), rep(c(0,1), n[2]/2)), nrow=sum(n)/2, ncol=K, byrow=TRUE) ## not used yet
+    g <- array(dim=c(L, sum(n)))
+    labels <- rep(c(1,2), n)
+    for(l in 1:L) {
+      for(pop in 1:2) {
+        p <- pp[l,pop]
+        if(diploid) g[l,labels == pop] <- sample(2:0, size=n[pop], prob=c(p^2, 2*p*(1-p), (1-p)^2), replace=TRUE)
+        else g[l, labels == pop] <- rbinom(n[pop], size=1, prob=p)
+      }
+    }
+    if(diploid) class(g) <- c("genotypes", class(g))
+    else class(g) <- c("haplotypes", class(g))
+    labels(g) <- factor(labels)
+    attributes(g)$true <- list(mu=pp, q=q, F=F, K=K)
+    storage.mode(g) <- "integer"
+    g
+  }
+#+end_src
+
+
+rprior.q <- function(K, n) t(rdirichlet(n, rep(1/K, K)))
+
+rprior.mu <- function(K, L) structure(rbeta(L*K, shape1=1, shape2=1), dim=c(K, L))
+* Q plot
+#+source: qplots
+#+begin_src R
+  psi.qplot <- function(q, labels=NULL, show.labels=TRUE, means=FALSE, ...) {
+    ## 'levels' arg of factor allows an order for the populations to be specified
+    K <- ncol(q)
+    n <- nrow(q)
+    dotargs <- list(...)
+
+    if(!is.null(labels)) {
+      if(!is.factor(labels)) {
+        msg <- "please supply labels as a factor"
+        msg <- paste(msg, "note that you can use the 'levels' arg of factor() to specify an order for the populations")
+        stop(msg)
+      }
+      if(any(isna <- is.na(labels))) {
+        q <- q[!isna,]
+        labels <- labels[!isna]
+      }
+      if(means) {
+        q <- t(group.sums(t(q), labels=labels, average=TRUE))
+        dimnames(q) <- NULL
+        labels <- factor(levels(labels), levels=levels(labels))
+        n <- length(labels)
+      }
+      ord <- order(labels)
+      q <- q[ord,]
+      breaks <- which(diff(sort(as.integer(labels))) == 1)
+      breaks <- c(0, breaks, n)
+    }
+
+    barplot(t(q), col=my.brewer.pal(K, "qual"), space=0, inside=FALSE, yaxt="n", axisnames=FALSE, ...)
+    if(!is.null(dotargs$ylab)) axis(2, labels=dotargs$ylab, at=0.5, tick=FALSE, las=1, line=-2, hadj=1)
+
+    if(!is.null(labels)) {
+      abline(v=breaks)
+      if(show.labels) {
+        pops <- levels(labels)
+        npops <- nlevels(labels)
+        axis(side=1, at=breaks[1:npops] + diff(breaks)/2, labels=pops, tick=FALSE, line=-1, las=2, ...) ## cex=0.8
+      }
+    }
+    invisible(order(q[,1]))
+  }
+
+  psi.multi.qplot <- function(qq, labels=NULL, clabels=NULL, levels=sort(unique(labels)), means=FALSE, new=TRUE, ...) {
+    npanels <- length(qq)
+    n <- sapply(qq, nrow)
+    stopifnot(n == n[1])
+    n <- n[1]
+
+    if(!is.null(labels)) {
+      stopifnot(missing(levels) || sort(unique(labels)) == sort(levels))
+      labels <- factor(labels, levels=levels)
+    }
+    if(new) {
+      op <- par(mfrow=c(npanels, 1), mar=c(0,4,0,0), oma=c(2,2,2,2), las=1, cex.axis=1.5)
+      on.exit(par(op))
+    }
+
+    for(i in 1:npanels)
+      psi.qplot(qq[[i]], labels=labels, means=means, show.labels=FALSE, ...)
+
+    codes <- as.integer(factor(labels))
+    breaks <- which(diff(sort(codes)) == 1)
+    breaks <- c(0, breaks, n)
+
+    axis(side=1, at=breaks[1:nlevels(labels)] + diff(breaks)/2, labels=substr(levels(labels), 1, 2), cex.axis=1, tick=FALSE, outer=TRUE, line=-0.7)
+  }
+
+  qq.plot <- function(q1, q2) {
+    stopifnot(dim(q1) == dim(q2))
+    K <- ncol(q1)
+    n <- nrow(q1)
+    op <- par(mfrow=c(3, ceiling(K/3)))
+    on.exit(par(op))
+    for(k in 1:K) plot(q1[,k], q2[,k])
+  }
+#+end_src
+
+* KL Dirichlet
+#+begin_src R
+  KL.dirichlets <- function(w,v) {
+    ## Kullback-Leibler divergence between two Dirichlets with parameters w_1,...,w_K and v_1,...,v_K
+    ## Rezek & Roberts et al variational Bayes HMM book chapter
+    ## http://www.robots.ox.ac.uk/~irezek/Outgoing/Papers/varhmm.ps.gz
+
+    A <- sum(lgamma(v) - lgamma(w))
+    B <- lgamma(sum(w)) - lgamma(sum(v))
+    C <- sum((w-v)*(digamma(w) - digamma(sum(w))))
+    A+B+C
+  }
+#+end_src
+* Proxy population admixture analyses
+#+source: admixmcmc
+#+begin_src R
+  admixmcmc.sim <- function(w=.68, n=c(100,100,100), L=100, F=NULL,
+                            burnin=500, nmcmc=1000, thin=1) {
+      K <- 2
+      q1 <- matrix(rep(c(1,0), each=n[1]), n[1], K)
+      q2 <- matrix(rep(c(0,1), each=n[2]), n[2], K)
+
+      qA <- matrix(NA, n[3], K)
+      qA[,1] <- w ## rbeta(n[3], 3, 3 * (1-w)/w)
+      qA[,2] <- 1 - qA[,1]
+
+      q <- rbind(q1, q2, qA)
+      cat("mean q is ", mean(qA[,1]), "\n")
+      is.admixed <- rep(c(FALSE,FALSE,TRUE), n)
+
+      M <- matrix(rep(diag(3), rep(n,3)), sum(n)) ## summation matrix
+
+      repeat {
+          g <- rmixture(sum(n), K=2, L=L, F=F, q=q)
+          n1 <- g %*% M       ## counts of A allele in the 3 pops
+          n2 <- rep(2*n, each=L) - n1 ## counts of a allele in the 3 pops ==? (2-g) %*% M
+          if(all(n1 > 0 & n2 > 0)) break
+      }
+
+      what <- uniroot(dmixloglike, c(0,1), nA=cbind(n1[,3], n2[,3]),
+                      p=n1[,-3] / rep(2*n[-3], each=L))$root
+      varw <- -1/d2mixloglike(what, nA=cbind(n1[,3], n2[,3]),
+                              p=n1[,-3] / rep(2*n[-3], each=L), bw=FALSE)
+      varw.bw <- -1/d2mixloglike(what, nA=cbind(n1[,3], n2[,3]),
+                                 p=n1[,-3] / rep(2*n[-3], each=L), bw=TRUE)
+
+      ## n1[,] <- n1[,1]
+      ## n2[,] <- n2[,1]
+      ## n1[] <- n2[] <- 0
+      w <- admixmcmc(n1, n2, burnin=burnin, nmcmc=nmcmc, thin=thin*10, Fmodel=FALSE)
+
+      return(w)
+
+      fixpops <- rep(c(1,2,NA), n)
+      g[, !is.na(fixpops) & fixpops == 2] <- g[, !is.na(fixpops) & fixpops == 1]
+      psifit <- psi(g, K=2, model="mcmcam", t=nmcmc, thin=thin, burnin=burnin, fixpops=fixpops)
+      qsam <- psifit$states ## dim = (K,n,t)
+      qbar <- colMeans(qsam[1,is.admixed,])
+
+      ## jpfit <- structure.jp(g, K=2, model="am", burnin=burnin, nmcmc=nmcmc,
+      ## usepopinfo=TRUE, pop=fixpops)
+
+      list(qbar=qbar, qsam=qsam, q=psifit$q, w=w) ##, jpfit=jpfit)
+  }
+
+  admixmcmc <- function(xA, xa, burnin, nmcmc, thin, print=10, delta=.1,
+                        Fmodel=TRUE, nodata=FALSE) {
+
+      ## xA[1:L,1:3] are counts of A allele at L SNPs in the two parental and the admixed populations
+      ## xa[1:L,1:3] are the same, for allele a
+      ## parameters of model are
+      ##   ancestral and parental allele frequencies p0, p1, p2
+      ##   drift parameters F1, F2, Gi := (1-Fi)/Fi
+      ##   parental pop allele frequencies pi ~ Beta( p0Gi, (1-p0)Gi )
+      ##   admixture proportion q
+      ##   obtain sample from posterior distribution of (p0, F1, F2, p1, p2, q)
+
+      dimn <- sapply(list(xA,xa), dim)
+      stopifnot(all.same(dimn[1,]), all(dimn[2,] == 3))
+      n1 <- xA[,1] + xa[,1]
+      n2 <- xA[,2] + xa[,2]
+      nA <- xA[,3] + xa[,3]
+      x1 <- xA[,1]
+      x2 <- xA[,2]
+      xA <- xA[,3]
+      L <- length(x1)
+
+      ##-------------------------------------------------------------------------------------------
+      ##
+      ## the model (sampling and log-density functions)
+      ##
+      a <- b <- 1.1
+      if(Fmodel) {
+          rp0 <- function(L) rbeta(L, shape1=a, shape2=b)
+          ldp0 <- function(p) dbeta(p, shape1=a, shape2=b, log=TRUE)
+
+          rF <- function()
+              repeat {
+                  F <- rgamma(1, shape=1, rate=10)
+                  if(F > 0 && F < 1) return(F)
+              }
+          ldF <- function(F) dgamma(F, shape=1, rate=10, log=TRUE)
+
+          rp <- function(L, p0, G)
+              repeat {
+                  p <- rbeta(L, shape1=p0*G, shape2=(1-p0)*G)
+                  if(all(p > 0 & p < 1)) return(p)
+              }
+          ldp <- function(p, p0, G) dbeta(p, shape1=p0*G, shape2=(1-p0)*G, log=TRUE)
+      }
+      else {
+          rp0 <- function(L) NA
+          rF <- function() NA
+          rp <- function(L, p0, G) rbeta(L, shape1=a, shape2=b)
+          ldp <- function(p, p0, G) dbeta(p, shape1=a, shape2=b, log=TRUE)
+      }
+
+      rx <- function(p, n) rbinom(length(p), size=n, prob=p)
+      ldx1 <- function(p1) dbinom(x1, size=n1, prob=p1, log=TRUE)
+      ldx2 <- function(p2) dbinom(x2, size=n2, prob=p2, log=TRUE)
+      ldxA <- function(p1, p2, q) dbinom(xA, size=nA, prob=q*p1 + (1-q)*p2, log=TRUE)
+
+      rq <- function() rbeta(1, shape1=1, shape2=1)
+      ldq <- function(q) dbeta(q, shape1=1, shape2=1, log=TRUE)
+      ##-------------------------------------------------------------------------------------------
+      if(nodata)
+          ldx1 <- ldx2 <- ldxA <- function(p, arg2=NA, arg3=NA) rep(0, length(p))
+
+      deltap <- .01
+      deltaF <- .01
+      deltaq <- .2
+
+      p0 <- rp0(L)
+      F1 <- rF() ; G1 <- (1-F1)/F1
+      F2 <- rF() ; G2 <- (1-F2)/F2
+
+      p1 <- rp(L, p0, (1-F1)/F1)
+      p2 <- rp(L, p0, (1-F2)/F2)
+      q <- rq()
+      cat(sprintf("initially: q = %f, F1 = %f, F2 = %f\n", q, F1, F2))
+      ## x1 <- rx(p1)
+      ## x2 <- rx(p2)
+      ## xA <- rx(q*p1 + (1-q)*p2)
+
+      samp <- matrix(NA, nmcmc, 3, dimnames=list(NULL, c("q","F1","F2")))
+      for(iter in seq(-burnin, nmcmc*thin)) {
+
+          if(Fmodel) {
+              p0 <- update(p0, deltap, function(p0) ldp0(p0) + ldp(p1, p0, G1) + ldp(p2, p0, G2))
+              if(any(is.na(p0))) recover()
+              F1 <- update(F1, deltaF, function(F1) ldF(F1) + sum(ldp(p1, p0, (1-F1)/F1)))
+              if(is.na(F1)) recover()
+              F2 <- update(F2, deltaF, function(F2) ldF(F2) + sum(ldp(p2, p0, (1-F2)/F2)))
+              if(is.na(F2)) recover()
+              G1 <- (1-F1)/F1
+              if(is.na(G1)) recover()
+              G2 <- (1-F2)/F2
+              if(is.na(G2)) recover()
+          }
+          p1 <- update(p1, deltap, function(p1) ldp(p1, p0, G1) + ldx1(p1) + ldxA(p1, p2, q))
+          if(any(is.na(p1))) recover()
+          p2 <- update(p2, deltap, function(p2) ldp(p2, p0, G2) + ldx2(p2) + ldxA(p1, p2, q))
+          if(any(is.na(p2))) recover()
+          q <- update(q, deltaq, function(q) ldq(q) + sum(ldxA(p1, p2, q)))
+          if(is.na(q)) recover()
+          if(iter > 0 && !(iter %% thin)) {
+              i <- iter %/% thin
+              samp[i,] <- c(q, F1, F2)
+              if(i %% print == 0) cat(".")
+          }
+      }
+      cat("\n")
+      samp
+  }
+
+  update <- function(old, delta, ldf) {
+      new <- jumpp(old, delta)
+      ifelse(runif(length(old)) < exp(ldf(new) - ldf(old)), new, old)
+  }
+
+  jumpp <- function(pold, delta) {
+      repeat {
+          pnew <- runif(length(pold), pold - delta, pold + delta)
+          pnew[pnew > 1] <- 2 - pnew[pnew > 1]
+          pnew[pnew < 0] <- -pnew[pnew < 0]
+          if(all(pnew > 0 & pnew < 1)) return(pnew)
+      }
+  }
+
+#+end_src
+** Old
+#+begin_src R
+  admixmcmc.dodgy <- function(n1, n2, burnin, nmcmc, thin, gridstep=0.01, printperiod=100,
+                              winit=sample(wgrid, 1), delta=.1) {
+      ## n1[1:L,1:3] are counts of A allele at L SNPs in the two parental and the admixed populations
+      ## n2[1:L,1:3] are the same, for allele a
+      ## parameters of model are p1, p2 = parental allele frequencies and admixture proportion w
+      ## obtain sample from posterior distribution of (p1, p2, w)
+
+      dimn <- sapply(list(n1,n2), dim)
+      stopifnot(all.same(dimn[1,]), all(dimn[2,] == 3))
+      nA <- cbind(n1[,3], n2[,3])
+      L <- nrow(n1)
+      p <- matrix(NA, L, 2)
+      wsam <- numeric(nmcmc)
+      wgrid <- seq(0,1,by=gridstep)
+      nw <- length(wgrid)
+      w <- winit ## sample(wgrid, 1) ## uniform prior on w
+      ## M <- matrix(rep(diag(nw), each=L), nw, nw*L, byrow=TRUE) ## performs required summations
+      www <- rep(wgrid, each=L)
+
+      n0 <- c(1,1) ## parameters of beta prior on allele frequency
+      for(iter in seq(-burnin, nmcmc*thin)) {
+
+          ## Gibbs update of parental allele frequencies
+          stop("This is dodgy. I now don't think it's obvious how to do the Gibbs update.")
+          ww <- rep(c(w,1-w), each=L)
+          p[] <- rbeta(2*L, n1[,1:2] + ww*n1[,3] + n0[1], n2[,1:2] + ww*n2[,3] + n0[2])
+          ## p[,1] <- rbeta(L, n1[,1] +     w*n1[,3] + n0[1], n2[,1] +     w*n2[,3] + n0[2])
+          ## p[,2] <- rbeta(L, n1[,2] + (1-w)*n1[,3] + n0[1], n2[,2] + (1-w)*n2[,3] + n0[2])
+
+          if(FALSE) {
+              ## Gibbs update of (discretised) admixture proportion
+              ## loglike <- sapply(wgrid, mixloglike, nA, p)
+              ## ~twice as fast to compute vector of loglikelihoods without lapply,
+              ## using vectorisation:
+              pA <- www*p[,1] + (1 - www)*p[,2]
+              logpA <- log(pA)
+              logqA <- log(1-pA)
+              ll <- n1[,3]*logpA + n2[,3]*logqA
+              dim(ll) <- c(L, nw)
+              loglike <- colSums(ll)  ## M %*% ll
+              w <- sample(wgrid, 1, prob=exp(loglike - max(loglike)))
+              ## assumes uniform priors on w and p
+          }
+          else {
+              ## MH update of admixture proportion
+              wstar <- runif(1, w-delta, w+delta)
+              if(wstar < 0) wstar <- -wstar
+              if(wstar > 1) wstar <- 2 - wstar
+              if(runif(1) < exp(mixloglike(wstar, nA, p) - mixloglike(w, nA, p)))
+                  w <- wstar
+          }
+
+          if(iter > 0 && !(iter %% thin)) {
+              i <- iter %/% thin
+              wsam[i] <- w
+              if(i %% printperiod == 0) cat(".")
+          }
+      }
+      cat("\n")
+      wsam
+  }
+
+
+  mixloglike <- function(w, nA, p, pA = p %*% c(w,1-w)) {
+      ## nA[1:L,1:2] are counts of each of two alleles at L SNPs in admixed population
+      ## p[1:L,1:2] are allele frequency estimates at L SNPs in 2 parental populations
+      ## model is nA_l1 ~ Binom(nA_l1 + nA_l2, wp_l1 + (1-w)p_l2)
+      ## i.e. nA formed by binomial sampling from frequencies given by two-population
+      ## mixture with proportion w
+      ## return log p(nA|w,p)
+      if(FALSE) if(any(monos <- rowSums(p) %in% c(0,2))) {
+          nA <- nA[!monos,]
+          p <- p[!monos,]
+          stop(sum(monos), " monomorphs removed")
+      }
+      sum(nA[,1] * log(pA) + nA[,2] * log(1-pA))
+  }
+
+  dmixloglike <- function(w, nA, p, pA = p %*% c(w,1-w)) {
+      ## first derivative of log likelihood
+      ## pA <- cbind(pA, 1-pA)
+      ## sum( (p[,1] - p[,2]) * rowSums(nA / pA) )
+      sum((p[,1] - p[,2]) * ((nA[,1]/pA) - (nA[,2]/(1 -pA))))
+  }
+
+  d2mixloglike <- function(w, nA, p, pA = p %*% c(w,1-w), bw=FALSE) {
+      ## second derivative of log likelihood
+      pA <- cbind(pA, 1-pA)
+      if(bw) -sum( rowSums(nA) * (p[,1]-p[,2])^2 * rowSums(1 / pA))
+      else -sum( (p[,1]-p[,2])^2 * rowSums(nA / (pA^2)) )
+  }
+
+  varw <- function(what, nA, p, pA = p %*% c(w,1-w))
+      -1/d2mixloglike(what, nA, p, pA)
+
+
+  freqmix <- function(y, x) {
+      ## fit y ~ wx_1 + (1-w)x_2 by least squares
+      ## this is all rather dodgy; doesn't account for uncertainty in estimates of y or x_1 or x_2
+      ## mixlike is an attempt at improving this
+      stop("this is dodgy")
+      stopifnot(length(dim(x)) == 2, ncol(x) == 2)
+      if(is.null(dim(y))) {
+          stopifnot(length(y) == nrow(x))
+          dim(y) <- c(length(y), 1)
+      }
+
+      ss.resid <- function(w) {
+          ## For single response variable
+          yhat <- x %*% c(w,1-w)
+          sum((yhat - y)^2)
+      }
+      ## curve(Vectorize(ss.resid)(x),0,1)
+      ## abline(v=what, col="blue")
+
+      numer <- (x[,1] - x[,2]) * (y - x[,2])
+      denom <- (x[,1] - x[,2])^2
+      colSums(numer) / sum(denom)
+  }
+
+#+end_src
+* Old
+Older code incl. R implementations of EM and VB model fit
+** VB structure in R
+#+begin_src R
+  structure.vb <- function(x, K, admix, alpha.prior=NULL, lambda.prior=NULL, tol=1e-8) {
+    ## C code call excised from this as obsolete; still to be found in zzz.R
+    n <- nrow(x)
+    L <- ncol(x)
+    ploidy <- 2
+    J <- 2
+
+    ## If you have a uniform Dirichlet prior on allele frequencies, then q(z) (and hence everything else) doesn't change between iterations
+    if(is.null(alpha.prior))
+      alpha.prior <- rep(c(1,2.5,2.5,1), length.out=J*K)
+    ##alpha.prior <- 1
+
+    if(is.null(lambda.prior))
+      lambda.prior <- seq(1.0, 1.1, length=K)
+    ##lambda.prior <- 1
+
+    stopifnot(!is.raw(x), x %in% c(0,1,2,NA), length(alpha.prior) %in% c(J, J*K, J*K*L), length(lambda.prior) %% K == 0)
+    x <- x + 1
+
+    ## Parameters of prior and approximate posterior Dirichlets
+    alpha.prior <- alpha <- array(alpha.prior, dim=c(J, K, L))
+    lambda.prior <- lambda <- array(lambda.prior, dim=c(K, if(admix) n else 1))
+
+    ## R version of variational Bayes structure algorithm
+
+    ## KL divergences between priors and approximate posteriors
+    KL.mu <- array(dim=c(K,L))
+    KL.pi <- array(dim=n)
+
+    qz <- array(dim=c(K,ploidy,n,L))
+
+    m <- array(dim=c(K,n))    ## expectation (wrt qz) of #{allele copies in individ i that derive from population k}
+    mm <- array(dim=c(J,K,L)) ## expectation (wrt qz) of #{alleles of type j at locus l assigned to population k}
+
+    genotype <- array(c(1,1,1,2,2,2), dim=c(2,3))
+
+    digamma.alpha.sum <- digamma(apply(alpha, c(2,3), sum)) ## dim = (K,L)
+    digamma.lambda.sum <- digamma(colSums(lambda))
+
+    out <- c("d(q || p)", "E log p(z)", "E log p(x)", "entropy q(z)", "rel.inc")
+    out <- structure(rep(NA, length(out)), names=out)
+    out <- make.out(out, qz, lambda, alpha)
+
+    cat(sprintf("%5s %15s %15s %15s %15s %15s %15s\n", "iter","d_KL" ,"E log q(z)" ,"E log like" ,"entropy", "free energy", "rel. increase"))
+    cat(sprintf("%5s %15s %15s %15s %15s %15s %15s\n", "----", "----" , "----------" ,"----------" ,"-------","-----------","-------------"))
+
+    F.old <- -Inf
+    iter <- 0
+    while(TRUE) {
+
+  ### E-step q(z) update
+
+      for(l in 1:L) for(i in 1:n) {
+        g <- genotype[,x[i,l]]
+        for(a in 1:ploidy) {
+          for(k in 1:K)
+            qz[k,a,i,l] <- exp(digamma(lambda[k,i]) - digamma.lambda.sum[i] + digamma(alpha[g[a],k,l]) - digamma.alpha.sum[k,l])
+          qz[,a,i,l] <- qz[,a,i,l] / sum(qz[,a,i,l])
+        }
+      }
+
+  ### M-step
+
+      for(k in 1:K) {
+
+        ## q(pi) update
+        for(i in 1:n) {
+          m[k,i] <- sum(qz[k,,i,])
+          lambda[k,i] <- lambda.prior[k,i] + m[k,i]
+          KL.pi[i] <- KL.dirichlets(lambda[,i], lambda.prior[,i])
+        }
+
+
+        ## q(mu) update
+        for(l in 1:L) {
+          g <- genotype[,x[,l]] ## dim = (ploidy,n)
+          for(j in 1:J) {
+            mm[j,k,l] <- sum(qz[k,,,l][g == j])
+            alpha[j,k,l] <- alpha.prior[j,k,l] + mm[j,k,l]
+          }
+          KL.mu[k,l] <- KL.dirichlets(alpha[,k,l], alpha.prior[,k,l])
+        }
+      }
+
+      digamma.alpha.sum <- digamma(apply(alpha, c(2,3), sum)) ## dim = (K,L)
+      digamma.lambda.sum <- digamma(colSums(lambda))
+
+  ### compute negative free energy
+
+      ## KL divergence between prior and posterior
+      out["d(q || p)"] <- sum(KL.mu) + sum(KL.pi)
+
+      ## average missing data prior
+      out["E log p(z)"] <- sum(m * digamma(lambda)) - J*L*K*sum(digamma.lambda.sum)
+
+      ## average log likelihood
+      out["E log p(x)"] <- sum(mm * digamma(alpha))  -  sum(apply(mm, c(2,3), sum) * digamma.alpha.sum)
+
+      ## entropy of q(z)
+      out["entropy q(z)"] <- -sum(qz * log(qz))
+
+      out <- make.out(out, qz, lambda, alpha)
+
+      F.new <- out["F"] <- -out["d(q || p)"] + out["E log p(z)"] + out["E log p(x)"] + out["entropy q(z)"]
+
+      stopifnot(F.new >= F.old)
+      rel.inc <- (F.new - F.old) / -F.old
+
+      cat(sprintf("%5d %15.2lf %15.2lf %15.2lf %15.2lf %15.2lf %15.2lf\n",
+                  iter, out["d(q || p)"] , out["E log p(z)"] , out["E log p(x)"] , out["entropy q(z)"], F.new, rel.inc / tol))
+
+      if(is.finite(F.old) && rel.inc < tol) break
+      F.old <- F.new
+      iter <- iter+1
+    }
+    list(lambda=t(lambda), alpha=alpha, free.energy=F.new)
+  }
+
+  make.out <- function(out, qz, lambda, alpha) {
+    out["mean qz"] <- mean(qz)
+    out["mean lambda"] <- mean(lambda)
+    out["mean alpha"] <- mean(alpha)
+    out
+  }
+#+end_src
+** EM structure in R
+#+begin_src R
+  structure.em.old <- function(x, K, F=NULL, admix=TRUE, likelihood=c("binomial","gaussian"), diploid=TRUE, tol=1e-0, niters=100, version=2) {
+    ## fit K mixture model by EM
+    ## C code call excised from this as obsolete; still to be found in zzz.R
+
+    ## This version for haploid data stored as integer matrices with dim (L, 2n)
+    stopifnot(prod(dim(x)) < 1e6)
+    stopifnot(storage.mode(x) == "integer")
+    stopifnot(all(x %in% c(0,1)))
+
+    ## set.seed(1)
+    likelihood <- match.arg(likelihood)
+    if(likelihood == "gaussian")
+      stop("Does the Gaussian likelihood have any concept of diploidy? Gaussian branch of this function needs checking.")
+    ## stopifnot(likelihood == "gaussian" || all(x %in% c(0,1,2)))
+    stopifnot(is.null(F) || all(F <= 1 & F > 0))
+    require("abind")
+
+    twon <- ncol(x)
+    stopifnot(twon %% 2 == 0)
+    n <- twon/2
+    L <- nrow(x)
+
+    mu <- array(dim=c(L, K))
+    sigma2 <- if(likelihood == "gaussian") rep(list(array(dim=c(L,L))), K) else NULL
+    if(admix) {
+      q <- array(dim=c(n,K))
+      p <- if(C && version == 2) NULL else array(dim=c(L,twon,K))        ## p[l,i,k] = p(z_il = k | x_il) where i indexes chromosomes
+      indiv <- rep(1:n, each=2)
+    }
+    else {
+      pi <- array(dim=K)                 ## weight of each cluster
+      p <- array(dim=c(n,K))             ## p[i,k] = p(z_i = k | x_i)
+      chromosomes <- matrix(1:twon, n, 2, byrow=TRUE)
+    }
+    if(!is.null(F)) {
+      if(length(F) != K) { stopifnot(length(F) == 1) ; F <- rep(F, K) }
+      FF <- (1-F) / F
+      alpha <- rowMeans(x)
+      if(!all(alpha > 0 & alpha < 1)) {
+        v.low.freq <- 1e-4
+        alpha[alpha == 0] <- v.low.freq
+        alpha[alpha == 1] <- 1 - v.low.freq
+        ## stop("Don't think F model likes monomorphic loci currently.")
+      }
+    }
+
+    loglike <- function()
+      if(admix)
+        sum(sapply(1:L, function(l) sapply(1:twon, function(i) log(sum(sapply(1:K, complete.data.like, i=i, loci=l))))))
+      else
+        sum(sapply(1:n, function(i) log(sum(sapply(1:K, complete.data.like, i=i, loci=1:L)))))
+
+    complete.data.like <- function(i, k, loci) {
+      if(admix) prior <- q[indiv[i],k]
+      else {
+        prior <- pi[k]
+        i <- chromosomes[i,]
+      }
+      prior * switch(likelihood,
+                     "binomial" = prod(dbinom(x[loci,i], size=1, prob=mu[loci,k])),
+                     "gaussian" = prod(dnorm(x[loci,i], mean=mu[loci,k], sd=sqrt(diag(sigma2[[k]])[loci]))))
+    }
+
+    missing.data.posterior <- function() {
+      if(admix) {
+        sapply(1:L, function(l) {
+          p[l,,] <<- sapply(1:K, function(k) sapply(1:twon, complete.data.like, loci=l, k=k))
+          p[l,,] <<- p[l,,] / rowSums(p[l,,])
+        })
+        p
+      }
+      else {
+        p <- sapply(1:K, function(k) sapply(1:n, complete.data.like, loci=1:L, k=k))
+        p / rowSums(p)
+      }
+    }
+
+    logprior <- function()
+      if(is.null(F)) 0
+    ##else sum(sapply(1:K, function(k) dbeta(mu[,k], shape1 = alpha * FF[k], shape2=(1-alpha) * FF[k], log=TRUE)))
+      else sum(sapply(1:K, function(k) (alpha * FF[k]) * log(mu[,k]) +  ((1-alpha) * FF[k]) * log(1 - mu[,k])))
+
+    ## initialisation
+    mu[] <- switch(likelihood, "gaussian" = rnorm(L*K), "binomial" = rbeta(L*K, shape1=1, shape2=1))
+    if(likelihood == "gaussian") for(k in 1:K) sigma2[[k]] <- diag(L)
+    if(admix) q <- rdirichlet(n, rep(1/K, K))
+    else pi[] <- 1/K
+
+    logpost <- loglike() + logprior()
+    cat(loglike(), logprior(), logpost, "\n")
+
+    iter <- 0
+    while(TRUE) {
+
+      p <- missing.data.posterior()
+
+      if(admix) q <- t(sum.adjacent.columns(t(apply(p, c(2,3), mean))))/2
+      else pi <- colMeans(p)
+
+      if(admix) {
+        if(is.null(F)) sapply(1:L, function(l) mu[l,] <<- x[l,] %*% p[l,,] / colSums(p[l,,]))
+        else sapply(1:L, function(l) mu[l,] <<- (x[l,] %*% p[l,,] +  alpha[l] * FF) / (colSums(p[l,,]) + FF))
+      }
+      else mu <- x %*% p / rep(n*pi, each=L)
+
+      if(likelihood == "binomial") {
+        if(any(mu > 1  |  mu < 0)) { cat("mu < 0 or mu > 1\n") ; recover() }
+        mu[mu > 1] <- 1 ## to account for
+        mu[mu < 0] <- 0 ## machine error
+      }
+
+      if(FALSE && likelihood == "gaussian") for(k in 1:K) {
+        ## What is admixture version? And is it necessary to estimate variances (diagonals) in unlinked case when data is rescaled?
+        weighted.matrices <- lapply(1:n, function(i) crossprod(t(x[,i] - 2*mu[,k])) * p[i,k] / (n * pi[k]))
+        sigma2[[k]] <- apply(abind(weighted.matrices, along=3), c(1,2), sum)
+      }
+
+      logpost.prev <- logpost
+      logpost <- loglike() + logprior()
+      cat(loglike(), logprior(), logpost, "\n")
+      if(!is.finite(logpost)) recover()
+
+      incr <- logpost - logpost.prev
+      stopifnot(incr >= 0)
+      iter <- iter + 1
+      if(iter >= niters) break
+      ## if(incr < tol) break
+    }
+    cat("\n")
+    out <- list(logpost=logpost, mu=mu, q=if(admix) q else pi, p=p, x=x)
+    out
+  }
+#+end_src
+** admix.simulation
+#+begin_src R
+  admix.simulation <- function(n=20, L=100, true.K=2, true.F=NULL, model.F=NULL, model.K=true.K,
+                               tol=1, niters=100, nstarts=1, C=TRUE, version=3, title="", x=NULL) {
+    true <- list(K=true.K, F=true.F)
+    K <- true$K
+    if(is.null(true$F)) {
+      true$mu <- replicate(K, rbeta(L, shape1=1, shape2=1))
+      true$q <- rdirichlet(n=n, a=rep(1/K, K))
+      x <- rmixture(n=n, mu=true$mu, q=true$q, model="binomial")
+    }
+    else {
+      stopifnot(n %% 2 == 0)
+      if(is.null(x)) x <- simulate.data(n=c(n/2, n/2), K=K, F=rep(true$F, K), L=L, model="BN", diploid=FALSE)
+      true <- attributes(x)$true
+    }
+
+    fit <- replicate(nstarts, em(x=x, K=model.K, F=model.F,
+                                 admix=TRUE, likelihood="binomial", tol=tol, niters=niters, C=C, version=version), simplify=FALSE)
+    fit <- fit[[which.max(sapply(fit, "[[", "logpost"))]]
+
+    plot.columns(true$mu, fit$mu, main=paste("mu", title, sep="|"), cex.main=2)
+
+    x11()
+    plot.columns(true$q, fit$q, main=paste("q", title, sep="|"), cex.main=2)
+
+    ## if(K == 2) plot(true$q[,1], fit$q[,1], main=fit$llike, pch=21, bg="black", cex=2)
+    ## else plot.columns(true$q, fit$q, main=fit$llike, pch=21, bg="black", cex=2)
+
+    invisible(list(data=x, true=true, fit=fit))
+  }
+#+end_src
+** Etc
+#+begin_src R
+  average.log.likelihood <- function(x, qz, alpha, digamma.alpha.sum, genotype) {
+
+    stop("old and wrong")
+    n <- nrow(x)
+    L <- ncol(x)
+    ploidy <- dim(qz)[2]
+
+    ans <- 0
+    for(l in 1:L) {
+      for(i in 1:n) {
+        g <- genotype[,x[i,l]]
+        for(a in 1:ploidy)
+          ans <- ans + sum(qz[,a,i,l] * (digamma(alpha[g[a],,l]) - sum(digamma.alpha.sum[,l])))
+      }
+    }
+    ans
+  }
+
+
+  plot.mixture.model <- function(model) {
+    K <- ncol(model$mu)
+    switch(model$model,
+           "gaussian" = {
+             plot(t(model$x), col=1 + max.col(model$post))
+             for(k in 1:K)
+               lines(ellipse(model$sigma2[[k]], centre=model$mu[,k]), col=k+1)
+           },
+           "binomial" = {
+             require(prada)
+             plot(jitter(t(model$x)), col=1 + max.col(model$post), xlim=c(0,2), ylim=c(0,2))
+             for(k in 1:K)
+               abline(v=model$mu[1,k], h=model$mu[2,k], col=k+1)
+           })
+  }
+
+
+  cluster.mapping <- function(q1, q2) {
+    r <- cor(q1, q2)
+    ind <- apply(r, 1, which.max)
+    labels <- seq_along(ind)
+    ind[duplicated(ind)] <- labels[!labels %in% ind]
+    ind
+  }
+
+  mu.prior <- function(alpha, F, add=FALSE) {
+    curve(dbeta(x, shape1=alpha*(1-F)/F, shape2=(1-alpha)*(1-F)/F), from=0, to=1, add=add)
+    abline(v=alpha, col="blue")
+  }
+
+  em.vs.gibbs <- function(x, num.sample=100, true.K=2, model.K=2, true.F=.9) {
+    x <- simulate.data(n=c(10,10), F=true.F, K=true.K, L=100, diploid=TRUE)
+    x.bit <- encode(t(x))
+    gibbs <- ps(x.gibbs, K=model.K, burn.in=100, num.sample=num.sample, fix.alpha=TRUE, fix.pi=TRUE, na.lab=NA, popdif.flag=FALSE)
+  }
+
+
+  gibbs.vs.em.data <- function(n, K, L, F) {
+    stopifnot(n %% K == 0)
+    x.gibbs <- simMD(N=n/K, P=K, L=L, p = NULL, c.vec1 = rep(F, K), ac = 2)
+    x.em <- encode(apply(x.gibbs - 1, c(1,3), sum))
+
+    list(gibbs=x.gibbs, em=x.em)
+  }
+
+  gibbs <- function(x, K, burn.in, num.sample)
+    ps(x, K=model.K, burn.in=burn.in, num.sample=num.sample, popdif.flag=FALSE, fix.alpha=TRUE, fix.pi=TRUE, na.lab=NA)
+
+  integral.check <- function(a, b) {
+    f <- function(x) dbeta(x, a, b) * log(x)
+    digamma.answer <- function(a, b) digamma(a) - digamma(a + b)
+    list(integral=integrate(f, lower=0, upper=1), claim=digamma.answer(a,b))
+  }
+
+  psi.storage <- function(nprocs, L, n, K, int=4, double=8) {
+    bytes <- L * (int  +  (3*n + K) * (double/nprocs))
+    bytes * 2^(-30) ## Mb
+  }
+#+end_src
