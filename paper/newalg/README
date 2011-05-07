@@ -1,0 +1,25 @@
+			   The newalg package
+                           ------------------
+
+Introduction
+------------
+
+The package contains the definitions that are needed to typeset code
+algorithms in a pretty way.  The Formatted algorithms follow the style
+set forth in the book ``Introduction to Algorithms'' by Corman,
+Leiserson and Rivest.
+
+Read the included documentation for usage and examples.
+
+Installation
+------------
+
+To generate the newalg.sty file run "latex newalg.ins".  The generated
+file can be copied to the LaTeX macros directory.
+
+To generate the documentation run latex 3 times on the file newalg.dtx.
+This must be done after the newalg.sty file is generated (Does not need
+to be installed into the tree).
+
+
+
